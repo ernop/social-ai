@@ -1,4 +1,5 @@
 **/obj/*
 **/bin/*
 **/.vs/*
-**/token.txt 
+**/token.txt
+**/settings.json
