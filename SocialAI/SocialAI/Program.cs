@@ -23,7 +23,7 @@ public class Program
         await client.LoginAsync(TokenType.Bot, token);
         await client.StartAsync();
 
-        client.MessageUpdated += MessageUpdated;
+        //client.MessageUpdated += MessageUpdated;
         client.MessageReceived += MessageReceived;
 
         client.Ready += () =>
@@ -116,27 +116,9 @@ public class Program
 
     private async Task MessageReceived(SocketMessage message)
     {
+        var regot = await message.Channel.GetMessageAsync(message.Id);
         Console.WriteLine($"received {message}");
+        Console.WriteLine($"received {regot}");
         ProcessMessageAsync(message);
-    }
-
-    private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel)
-    {
-        var message = await before.GetOrDownloadAsync();
-        if (after.Attachments.Count > 0)
-        {
-            var att = after.Attachments.First();
-            if (att.Filename.EndsWith("webp"))
-            {
-                Console.WriteLine("webp:" + after);
-                return;
-            }
-            Console.WriteLine($"{after}");
-            ProcessMessageAsync(after);
-        }
-        else
-        {
-            Console.WriteLine($"No Attachments {after}");
-        }
     }
 }
