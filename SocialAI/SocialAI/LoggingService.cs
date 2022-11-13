@@ -2,7 +2,6 @@
 using Discord.Commands;
 using Discord.WebSocket;
 
-
 public class LoggingService
 {
     public LoggingService(DiscordSocketClient client, CommandService command)
