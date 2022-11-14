@@ -8,13 +8,17 @@ public class FileManager
 
 {
     public string ImageStorage { get; set; }
+    public static int LineSize { get; set; } = 55;
+    public static int FontSize { get; set; } = 48;
+    public static int CharsPerLine { get; set; } = 40;
+    public static int TextExtraY { get; set; } = LineSize/2;
 
     public FileManager(string imageStorage)
     {
         ImageStorage = imageStorage;
     }
 
-    public Font Arial { get; set; } = new Font("Gotham", 30, FontStyle.Regular);
+    public Font Arial { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
 
     public string GetTextInLines(string text, int lineLength)
     {
@@ -51,9 +55,9 @@ public class FileManager
     {
         var g = Image.FromFile(fp);
         var s = g.Size;
-        var lines = GetTextInLines(text, 54);
+        var lines = GetTextInLines(text, CharsPerLine);
 
-        var extra = 42 * lines.Split('\n').Count() + 10;
+        var extra = LineSize * lines.Split('\n').Count() + TextExtraY;
 
         var im = new Bitmap(s.Width, s.Height + extra);
 
@@ -68,7 +72,7 @@ public class FileManager
 
         foreach (var line in lines.Split('\n'))
         {
-            var pos = s.Height + 5 + ii * 42;
+            var pos = (float)Math.Floor((double)(s.Height + TextExtraY/2 + ii * LineSize));
             ii += 1;
             graphics.DrawString(line, Arial, brush, new PointF(0, pos));
         }

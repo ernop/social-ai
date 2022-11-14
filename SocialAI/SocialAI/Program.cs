@@ -31,7 +31,7 @@ public class Program
             Console.WriteLine("Bot is connected!");
             return Task.CompletedTask;
         };
-        //MonitorChannel();
+        MonitorChannel();
 
         await Task.Delay(-1);
     }
@@ -43,7 +43,7 @@ public class Program
 
     private async void MonitorChannel()
     {
-        var json = File.ReadAllText("d:\\proj\\social-ai\\social-ai\\SocialAI\\settings.json");
+        var json = File.ReadAllText("d:\\proj\\social-ai\\social-ai\\SocialAI\\SocialAI\\settings.json");
         var settings= JsonConvert.DeserializeObject<Settings>(json);
         
         foreach (var channelid in settings.ChannelIds)
@@ -117,8 +117,7 @@ public class Program
     private async Task MessageReceived(SocketMessage message)
     {
         var regot = await message.Channel.GetMessageAsync(message.Id);
-        Console.WriteLine($"received {message}");
         Console.WriteLine($"received {regot}");
-        ProcessMessageAsync(message);
+        ProcessMessageAsync(regot);
     }
 }
