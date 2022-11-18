@@ -19,7 +19,7 @@ public static class Utils
         }
         else
         {
-            psp = rawPrompt.Substring(0, rawPrompt.IndexOf("** - ")).Trim().Split("--")[0].Trim();
+            psp = rawPrompt.Substring(0, rawPrompt.IndexOf("** - ")).Trim().Split("--v")[0].Trim();
         }
         p.Message = psp;
         return p;

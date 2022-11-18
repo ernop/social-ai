@@ -5,79 +5,91 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 
 public class FileManager
-
 {
     public string ImageStorage { get; set; }
-    public static int LineSize { get; set; } = 55;
-    public static int FontSize { get; set; } = 48;
-    public static int CharsPerLine { get; set; } = 40;
-    public static int TextExtraY { get; set; } = LineSize/2;
+    public static int LineSize { get; set; } = 45;
+    public static int FontSize { get; set; } = 36;
+    public static int TextExtraY { get; set; } = LineSize / 2+5;
 
     public FileManager(string imageStorage)
     {
         ImageStorage = imageStorage;
     }
 
-    public Font Arial { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
+    public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
 
-    public string GetTextInLines(string text, int lineLength)
+    public List<string> GetTextInLines(string text,int pixelWidth, Graphics g)
     {
+        var remainingText = text+" ";
+        
         var lines = new List<string>();
-        var line = "";
-        foreach (var w in text.Split(' '))
+        while (remainingText != "")
         {
-            if (line.Length + w.Length > lineLength)
+            if (remainingText==" ")
             {
-                lines.Add(line);
-                line = w;
+                break;
             }
-            else
+            var testLength = remainingText.Length-1;
+            while (true)
             {
-                if (line == "")
+                if (testLength == 0)
                 {
-                    line = w;
+                    break;
                 }
-                else
+                var nth = remainingText[testLength];
+                if (nth!=' ')
                 {
-                    line = line + " " + w;
+                    testLength--;
+                    continue;
                 }
+                var candidateText = remainingText.Substring(0, testLength);
+                var w = g.MeasureString(candidateText, Font);
+                if (w.Width < pixelWidth)
+                {
+                    remainingText = remainingText.Substring(testLength);
+                    lines.Add(candidateText.Trim());
+                    break;
+                }
+                testLength--;
+               
             }
         }
-        if (!string.IsNullOrEmpty(line))
-        {
-            lines.Add(line);
-        }
-        return String.Join('\n', lines);
+
+        return lines;
     }
 
 
     public void Annotate(string fp, string text)
     {
-        var g = Image.FromFile(fp);
-        var s = g.Size;
-        var lines = GetTextInLines(text, CharsPerLine);
+        var originalImage = Image.FromFile(fp);
+        var originalSize = originalImage.Size;
+        var fakeGraphics = Graphics.FromImage(originalImage);
 
-        var extra = LineSize * lines.Split('\n').Count() + TextExtraY;
+        var lines = GetTextInLines(text, originalSize.Width, fakeGraphics);
+        fakeGraphics.Dispose();
 
-        var im = new Bitmap(s.Width, s.Height + extra);
+        var extraYPixels = LineSize * lines.Count() + TextExtraY;
+
+        var im = new Bitmap(originalSize.Width, originalSize.Height + extraYPixels);
 
         var graphics = Graphics.FromImage(im);
         graphics.Clear(Color.Black);
-        graphics.DrawImage(g, new Point(0, 0));
+        graphics.DrawImage(originalImage, new Point(0, 0));
 
-        g.Dispose();
+        originalImage.Dispose();
 
         var ii = 0;
         var brush = new SolidBrush(Color.White);
 
-        foreach (var line in lines.Split('\n'))
+        foreach (var line in lines)
         {
-            var pos = (float)Math.Floor((double)(s.Height + TextExtraY/2 + ii * LineSize));
+            var pos = (float)Math.Floor((double)(originalSize.Height + TextExtraY / 2 + ii * LineSize));
             ii += 1;
-            graphics.DrawString(line, Arial, brush, new PointF(0, pos));
+            graphics.DrawString(line, Font, brush, new PointF(0, pos));
         }
-
+        graphics.Save();
         im.Save(fp);
+        var x = 5;
     }
 
     public string GetPathToSave(string filename)
@@ -93,7 +105,6 @@ public class FileManager
         }
         while (true)
         {
-
             var joined = $"{ImageStorage}/{filename}";
             if (File.Exists(joined))
             {

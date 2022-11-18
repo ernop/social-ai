@@ -24,11 +24,8 @@ public class ParsedMessage
         {
             return false;
         }
-        //download image
         await DownloadImageAsync(path, ImageUrl);
         FileManager.Annotate(path, Prompt.Message);
-        //annotate it
-        //write json
         return true;
     }
 

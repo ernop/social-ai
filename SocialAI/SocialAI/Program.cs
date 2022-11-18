@@ -1,6 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
 using System.Threading;
 using Newtonsoft.Json;
 
@@ -12,9 +15,19 @@ public class Program
     private DiscordSocketClient client;
     private FileManager FileManager = new FileManager("d:\\proj\\social-ai\\output\\images");
 
+    public static void Test()
+    {
+        var im = Bitmap.FromFile("d:\\dl\\signal-2022-05-08-102334.jpeg");
+        var fakeGraphics = Graphics.FromImage(im);
+        var fm = new FileManager("d:\\proj\\social-ai\\output\\images");
+        var text = "When the expected memetic traction of an idea is conditional on how the idea is formatted, we do not merely bend the outward expression of a new idea into advantageous formatting—as if we think purely first, and only later publish instrumentally and politically. Rather, we begin to pre-format thinking itself, and avoid thoughts that are difficult to format advantageously. We feel that we publish purely and freely, but only because we've installed the instrumental filter at a deeper, almost unconscious level.";
+        fm.GetTextInLines(text, 1024, fakeGraphics);
+    }
+
     public async Task MainAsync()
 
     {
+        Test();
         client = new DiscordSocketClient();
         client.Log += Log;
 
@@ -64,27 +77,28 @@ public class Program
             var page = 0;
             while (page < 20)
             {
-                page++;
-                IAsyncEnumerable<IReadOnlyCollection<IMessage>>? msgs = null;
+                IAsyncEnumerable<IReadOnlyCollection<IMessage>>? pages = null;
                 if (fromMessage == null)
                 {
-                    msgs = channel.GetMessagesAsync();
+                    pages = channel.GetMessagesAsync();
                 }
                 else
                 {
-                    msgs = channel.GetMessagesAsync(fromMessage, Direction.Before);
+                    pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
                 }
 
-                await foreach (var m in msgs)
+                Console.WriteLine($"channelId:{channelid} - pgae:{page} - {pages.CountAsync()}");
+
+                await foreach (var awaitedPage in pages)
                 {
-                    foreach (var mm in m)
+                    foreach (var mm in awaitedPage)
                     {
                         fromMessage = mm;
                         ProcessMessageAsync(mm);
                         await Task.Delay(1);
                     }
                 }
-                break;
+                page++;
             }
         }
     }
@@ -103,7 +117,7 @@ public class Program
                 var du = new DiscordUser();
                 var p = GetPrompt(s);
                 var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, att.Filename);
-                var res = ui.Save();
+                ui.Save();
             }
         }
     }
