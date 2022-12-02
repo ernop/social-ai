@@ -1,6 +1,7 @@
 ﻿
 public static class Utils
 {
+    public static int count { get; set; } = 0;
     public static Prompt GetPrompt(string rawPrompt)
     {
         //"** girl flips her hair --v 4** - <@331647167112413184> (metered, fast)"
@@ -21,6 +22,8 @@ public static class Utils
         {
             psp = rawPrompt.Substring(0, rawPrompt.IndexOf("** - ")).Trim().Split("--v")[0].Trim();
         }
+        count += 1;
+
         p.Message = psp;
         return p;
     }

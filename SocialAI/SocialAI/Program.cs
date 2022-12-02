@@ -8,6 +8,7 @@ using System.Threading;
 using Newtonsoft.Json;
 
 using static Utils;
+using System.Runtime;
 
 public class Program
 {
@@ -49,16 +50,11 @@ public class Program
         await Task.Delay(-1);
     }
 
-    public class Settings
-    {
-        public List<ulong> ChannelIds { get; set; }
-    }
-
     private async void MonitorChannel()
     {
         var json = File.ReadAllText("d:\\proj\\social-ai\\social-ai\\SocialAI\\SocialAI\\settings.json");
-        var settings= JsonConvert.DeserializeObject<Settings>(json);
-        
+        var settings = JsonConvert.DeserializeObject<Settings>(json);
+
         foreach (var channelid in settings.ChannelIds)
         {
             IMessage fromMessage = null;
@@ -116,7 +112,15 @@ public class Program
                 }
                 var du = new DiscordUser();
                 var p = GetPrompt(s);
-                var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, att.Filename);
+                var filename = att.Filename;
+                if (filename.Contains("_"))
+                {
+                    var fp = filename.Split("_", 2);
+                    filename = fp[1];
+                }
+                var createdTimestamp =$"{mm.CreatedAt.Year}y-{mm.CreatedAt.Month:D2}m-{mm.CreatedAt.Day:D2}d-{mm.CreatedAt.Hour:D2}h-{mm.CreatedAt.Minute:D2}m-{mm.CreatedAt.Second:D2}s";
+                filename = createdTimestamp + "-" + filename;
+                var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, filename);
                 ui.Save();
             }
         }
@@ -128,10 +132,39 @@ public class Program
         return Task.CompletedTask;
     }
 
+    private static void CleanTen()
+    {
+        var path = "d:\\proj\\social-ai\\output\\images";
+        var cleanPath = "d:\\proj\\social-ai\\output\\images\\clean";
+        var oldFileInfos = System.IO.Directory.GetFiles(path).Select(el=>new FileInfo(System.IO.Path.Combine(path,el))).OrderBy(el=>el.CreationTime).Take(10);
+        foreach (var el in oldFileInfos)
+        {
+            var oldPath = System.IO.Path.Combine(path, el.Name);
+            var newPath = System.IO.Path.Combine(cleanPath, el.Name);
+            if (System.IO.File.Exists(newPath))
+            {
+                System.IO.File.Delete(oldPath);
+            }
+            else
+            {
+                System.IO.File.Move(oldPath, newPath);
+            }
+        }
+    }
+
     private async Task MessageReceived(SocketMessage message)
     {
         var regot = await message.Channel.GetMessageAsync(message.Id);
-        Console.WriteLine($"received {regot}");
+        Console.WriteLine($"received {regot.Content}");
+        if (regot.Content.ToLower() == "clean")
+        {
+            CleanTen();
+            return;
+        }
+        if (regot.Content[0] != '*')
+        {
+            return;
+        }
         ProcessMessageAsync(regot);
     }
 }

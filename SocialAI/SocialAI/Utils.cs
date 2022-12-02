@@ -10,10 +10,12 @@ public class FileManager
     public static int LineSize { get; set; } = 45;
     public static int FontSize { get; set; } = 36;
     public static int TextExtraY { get; set; } = LineSize / 2+5;
+    public string CleanStorage { get; set; }
 
     public FileManager(string imageStorage)
     {
         ImageStorage = imageStorage;
+        CleanStorage = imageStorage + "/cleaned";
     }
 
     public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
@@ -98,11 +100,7 @@ public class FileManager
         {
             throw new ArgumentNullException();
         }
-        if (filename.Contains("_"))
-        {
-            var fp = filename.Split("_", 2);
-            filename = fp[1];
-        }
+        
         while (true)
         {
             var joined = $"{ImageStorage}/{filename}";
