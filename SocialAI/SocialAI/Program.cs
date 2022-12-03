@@ -8,19 +8,23 @@ using System.Threading;
 using Newtonsoft.Json;
 
 using static Utils;
+using System.ComponentModel;
+using System.Threading.Channels;
 using System.Runtime;
 
 public class Program
 {
+    private static int PageLimit { get; set; } = 4;
     public static Task Main(string[] args) => new Program().MainAsync();
     private DiscordSocketClient client;
-    private FileManager FileManager = new FileManager("d:\\proj\\social-ai\\output\\images");
+    private static FileManager FileManager { get; set; }
+    private static JsonSettings JsonSettings { get; }= JsonConvert.DeserializeObject<JsonSettings>(File.ReadAllText("d:\\proj\\social-ai\\settings.json"));
 
     public static void Test()
     {
         var im = Bitmap.FromFile("d:\\dl\\signal-2022-05-08-102334.jpeg");
         var fakeGraphics = Graphics.FromImage(im);
-        var fm = new FileManager("d:\\proj\\social-ai\\output\\images");
+        var fm = new FileManager(JsonSettings);
         var text = "When the expected memetic traction of an idea is conditional on how the idea is formatted, we do not merely bend the outward expression of a new idea into advantageous formatting—as if we think purely first, and only later publish instrumentally and politically. Rather, we begin to pre-format thinking itself, and avoid thoughts that are difficult to format advantageously. We feel that we publish purely and freely, but only because we've installed the instrumental filter at a deeper, almost unconscious level.";
         fm.GetTextInLines(text, 1024, fakeGraphics);
     }
@@ -28,12 +32,14 @@ public class Program
     public async Task MainAsync()
 
     {
-        Test();
+        FileManager = new FileManager(JsonSettings);
+
+        //Test();
         client = new DiscordSocketClient();
         client.Log += Log;
 
-        var token = File.ReadAllText("d:\\proj\\social-ai\\social-ai\\SocialAI\\token.txt");
-
+        var token = File.ReadAllText(JsonSettings.TokenPath);
+        
         await client.LoginAsync(TokenType.Bot, token);
         await client.StartAsync();
 
@@ -52,50 +58,116 @@ public class Program
 
     private async void MonitorChannel()
     {
-        var json = File.ReadAllText("d:\\proj\\social-ai\\social-ai\\SocialAI\\SocialAI\\settings.json");
-        var settings = JsonConvert.DeserializeObject<Settings>(json);
-
-        foreach (var channelid in settings.ChannelIds)
+        IChannel channel;
+        foreach (var channelId in JsonSettings.ChannelIds)
         {
-            IMessage fromMessage = null;
-            Discord.Rest.RestTextChannel channel = null;
             try
             {
-                channel = (Discord.Rest.RestTextChannel)client.GetChannelAsync(channelid).Result;
+                channel = client.GetChannelAsync(channelId).Result;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
-                Console.WriteLine(channelid);
                 continue;
             }
 
-            var page = 0;
-            while (page < 20)
+            var t = channel.GetChannelType();
+            switch (t)
             {
-                IAsyncEnumerable<IReadOnlyCollection<IMessage>>? pages = null;
-                if (fromMessage == null)
-                {
-                    pages = channel.GetMessagesAsync();
-                }
-                else
-                {
-                    pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
-                }
-
-                Console.WriteLine($"channelId:{channelid} - pgae:{page} - {pages.CountAsync()}");
-
-                await foreach (var awaitedPage in pages)
-                {
-                    foreach (var mm in awaitedPage)
-                    {
-                        fromMessage = mm;
-                        ProcessMessageAsync(mm);
-                        await Task.Delay(1);
-                    }
-                }
-                page++;
+                case ChannelType.Text:
+                    handleTextChannel((Discord.Rest.RestTextChannel)channel, channelId);
+                    break;
+                case ChannelType.DM:
+                    handleDMChannel((Discord.Rest.RestDMChannel)channel, channelId);
+                    break;
+                case ChannelType.Voice:
+                    break;
+                case ChannelType.Group:
+                    break;
+                case ChannelType.Category:
+                    break;
+                case ChannelType.News:
+                    break;
+                case ChannelType.Store:
+                    break;
+                case ChannelType.NewsThread:
+                    break;
+                case ChannelType.PublicThread:
+                    break;
+                case ChannelType.PrivateThread:
+                    break;
+                case ChannelType.Stage:
+                    break;
+                case ChannelType.GuildDirectory:
+                    break;
+                case ChannelType.Forum:
+                    break;
+                case null:
+                    break;
             }
+
+        }
+    }
+
+    private async void handleDMChannel(Discord.Rest.RestDMChannel channel, ulong channelId)
+    {
+        IMessage fromMessage = null;
+        var page = 0;
+        while (page < PageLimit)
+        {
+            IAsyncEnumerable<IReadOnlyCollection<IMessage>>? pages;
+            if (fromMessage == null)
+            {
+                pages = channel.GetMessagesAsync();
+            }
+            else
+            {
+                pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
+            }
+
+            Console.WriteLine($"DmChannelId:{channelId} - page:{page} - {pages.CountAsync()}");
+
+            await foreach (var awaitedPage in pages)
+            {
+                foreach (var mm in awaitedPage)
+                {
+                    fromMessage = mm;
+                    ProcessMessageAsync(mm);
+                    await Task.Delay(1);
+                }
+            }
+            page++;
+        }
+    }
+
+    private async void handleTextChannel(Discord.Rest.RestTextChannel channel, ulong channelId)
+    {
+        IMessage fromMessage = null;
+        var page = 0;
+        while (page < PageLimit)
+        {
+            IAsyncEnumerable<IReadOnlyCollection<IMessage>>? pages;
+            if (fromMessage == null)
+            {
+                pages = channel.GetMessagesAsync();
+            }
+            else
+            {
+                pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
+            }
+
+            Console.WriteLine($"TextChannelId:{channelId} - page:{page} - {pages.CountAsync()}");
+
+            await foreach (var awaitedPage in pages)
+            {
+                foreach (var mm in awaitedPage)
+                {
+                    fromMessage = mm;
+                    ProcessMessageAsync(mm);
+                    await Task.Delay(1);
+                }
+            }
+            page++;
         }
     }
 
@@ -112,15 +184,7 @@ public class Program
                 }
                 var du = new DiscordUser();
                 var p = GetPrompt(s);
-                var filename = att.Filename;
-                if (filename.Contains("_"))
-                {
-                    var fp = filename.Split("_", 2);
-                    filename = fp[1];
-                }
-                var createdTimestamp =$"{mm.CreatedAt.Year}y-{mm.CreatedAt.Month:D2}m-{mm.CreatedAt.Day:D2}d-{mm.CreatedAt.Hour:D2}h-{mm.CreatedAt.Minute:D2}m-{mm.CreatedAt.Second:D2}s";
-                filename = createdTimestamp + "-" + filename;
-                var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, filename);
+                var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, att.Filename);
                 ui.Save();
             }
         }

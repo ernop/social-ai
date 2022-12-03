@@ -6,20 +6,19 @@ using System.Drawing.Text;
 
 public class FileManager
 {
-    public string ImageStorage { get; set; }
+    public string ImageFolderFullPath { get; set; }
     public static int LineSize { get; set; } = 45;
     public static int FontSize { get; set; } = 36;
     public static int TextExtraY { get; set; } = LineSize / 2+5;
-    public string CleanStorage { get; set; }
-
-    public FileManager(string imageStorage)
-    {
-        ImageStorage = imageStorage;
-        CleanStorage = imageStorage + "/cleaned";
-    }
-
     public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
 
+
+    public FileManager(JsonSettings settings)
+    {
+        ImageFolderFullPath = settings.ImageBase;
+    }
+
+    
     public List<string> GetTextInLines(string text,int pixelWidth, Graphics g)
     {
         var remainingText = text+" ";
@@ -103,7 +102,7 @@ public class FileManager
         
         while (true)
         {
-            var joined = $"{ImageStorage}/{filename}";
+            var joined = $"{ImageFolderFullPath}/{filename}";
             if (File.Exists(joined))
             {
                 break;
