@@ -1,7 +1,7 @@
 # social-ai
 social ai image generation
 
-** How it works
+## How it works
 
 # this code sets up a discord bot
 
