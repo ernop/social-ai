@@ -3,7 +3,7 @@ social ai image generation
 
 ## How it works
 
-# this code sets up a discord bot
+### this code sets up a discord bot
 
 * everyone generates images in a channel
 * the bot monitors the channel
