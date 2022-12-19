@@ -1,6 +1,8 @@
-﻿
-public class Prompt
+﻿namespace SocialAi
 {
-    public string Message { get; set; }
-    public int Version { get; set; }
+    public class Prompt
+    {
+        public string? Message { get; set; }
+        public int Version { get; set; }
+    }
 }
