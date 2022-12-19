@@ -23,7 +23,7 @@ namespace SocialAi
             FileManager = fm;
         }
 
-        public async void HandleDMChannelAsync(Discord.Rest.RestDMChannel channel, ulong channelId)
+        public async void HandleDMChannelAsync(Discord.Rest.RestDMChannel channel, Channel channelConfig)
         {
             IMessage fromMessage = null;
             var page = 0;
@@ -39,7 +39,7 @@ namespace SocialAi
                     pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
                 }
 
-                Console.WriteLine($"DmChannelId:{channelId} - page:{page} - {pages.CountAsync()}");
+                Console.WriteLine($"DMChannel: {channelConfig.Name}:{channelConfig.ChannelId} - page:{page} - {pages.CountAsync()}");
 
                 await foreach (var awaitedPage in pages)
                 {
@@ -54,7 +54,7 @@ namespace SocialAi
             }
         }
 
-        public async void HandleTextChannelAsync(Discord.Rest.RestTextChannel channel, ulong channelId)
+        public async void HandleTextChannelAsync(Discord.Rest.RestTextChannel channel, Channel channelConfig)
         {
             IMessage fromMessage = null;
             var page = 0;
@@ -70,7 +70,7 @@ namespace SocialAi
                     pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
                 }
 
-                Console.WriteLine($"TextChannelId:{channelId} - page:{page} - {pages.CountAsync()}");
+                Console.WriteLine($"TextChannelId: {channelConfig.Name}:{channelConfig.ChannelId} - page:{page} - {pages.CountAsync()}");
 
                 await foreach (var awaitedPage in pages)
                 {

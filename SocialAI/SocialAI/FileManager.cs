@@ -10,17 +10,34 @@ namespace SocialAi
         //line-height, adjusted up to make it more visually appealing
         public static int LineSize { get; set; } = 45;
         public static int FontSize { get; set; } = 36;
+
+        //Unused currently, but we should move text in a bit to make it more visible in twitter previews where now it's slightly cut off.
+        public static int HorizontalBuffer { get; set; } = 10;
+        
+        //extra y to add to images in annotation section as a kind of vertical buffer.
         public static int TextExtraY { get; set; } = LineSize / 2 + 5;
         public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
         public JsonSettings Settings { get; set; }
+        
+        // A fake object required to calculate text widths.
+        public Graphics FakeGraphics { get; set; }
 
         public void Init(JsonSettings settings)
         {
             Settings = settings;
+
+            var fakePath = settings.ProjBase + "/image.png";
+            if (!System.IO.File.Exists(fakePath))
+            {
+                throw new Exception("something is wrong with your project settings file; you need to define projbase so projbase/image.png hits something");
+            }
+            FakeGraphics = Graphics.FromImage(new Bitmap(fakePath));
         }
 
-        public List<string> GetTextInLines(string? text, int pixelWidth, Graphics g)
+        public List<string> GetTextInLines(string? text, int pixelWidth)
         {
+            //for some reason we need a  "real" graphics object to calculate text widths based off of.
+            
             var remainingText = text + " ";
 
             var lines = new List<string>();
@@ -44,7 +61,8 @@ namespace SocialAi
                         continue;
                     }
                     var candidateText = remainingText.Substring(0, testLength);
-                    var w = g.MeasureString(candidateText, Font);
+                    
+                    var w = FakeGraphics.MeasureString(candidateText, Font);
                     if (w.Width < pixelWidth)
                     {
                         remainingText = remainingText.Substring(testLength);
@@ -65,8 +83,8 @@ namespace SocialAi
             var originalImage = Image.FromFile(fp);
             var originalSize = originalImage.Size;
             var fakeGraphics = Graphics.FromImage(originalImage);
-
-            var lines = GetTextInLines(text, originalSize.Width, fakeGraphics);
+          
+            var lines = GetTextInLines(text, originalSize.Width);
             fakeGraphics.Dispose();
 
             var extraYPixels = LineSize * lines.Count() + TextExtraY;

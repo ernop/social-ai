@@ -26,11 +26,11 @@ namespace SocialAi
 
         public static void Test()
         {
-            var im = Bitmap.FromFile("d:\\dl\\signal-2022-05-08-102334.jpeg");
+            var im = Bitmap.FromFile("d:\\dl\\2022-05-08-102334.jpeg");
             var fakeGraphics = Graphics.FromImage(im);
             FileManager.Init(JsonSettings);
             var text = "When the expected memetic traction of an idea is conditional on how the idea is formatted, we do not merely bend the outward expression of a new idea into advantageous formatting—as if we think purely first, and only later publish instrumentally and politically. Rather, we begin to pre-format thinking itself, and avoid thoughts that are difficult to format advantageously. We feel that we publish purely and freely, but only because we've installed the instrumental filter at a deeper, almost unconscious level.";
-            FileManager.GetTextInLines(text, 1024, fakeGraphics);
+            FileManager.GetTextInLines(text, 1024);
         }
 
         public async Task MainAsync()
@@ -69,13 +69,11 @@ namespace SocialAi
         private void MonitorChannel()
         {
             IChannel channel;
-
-    
-            foreach (var channelId in JsonSettings.ChannelIds)
+            foreach (var channelConfig in JsonSettings.Channels)
             {
                 try
                 {
-                    channel = client.GetChannelAsync(channelId).Result;
+                    channel = client.GetChannelAsync(channelConfig.ChannelId).Result;
                 }
                 catch (Exception ex)
                 {
@@ -87,10 +85,12 @@ namespace SocialAi
                 switch (t)
                 {
                     case ChannelType.Text:
-                        Handler.HandleTextChannelAsync((Discord.Rest.RestTextChannel)channel, channelId);
+                        Handler.HandleTextChannelAsync((Discord.Rest.RestTextChannel)channel, channelConfig);
+                        Console.WriteLine($"Monitoring TextChannel: {channelConfig.Name}");
                         break;
                     case ChannelType.DM:
-                        Handler.HandleDMChannelAsync((Discord.Rest.RestDMChannel)channel, channelId);
+                        Handler.HandleDMChannelAsync((Discord.Rest.RestDMChannel)channel, channelConfig);
+                        Console.WriteLine($"Monitoring DMChannel: {channelConfig.Name}");
                         break;
                     case ChannelType.Voice:
                         break;
@@ -120,8 +120,6 @@ namespace SocialAi
 
             }
         }
-
-
 
         private Task Log(Discord.LogMessage msg)
         {
