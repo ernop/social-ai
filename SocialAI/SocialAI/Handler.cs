@@ -23,7 +23,7 @@ namespace SocialAi
             FileManager = fm;
         }
 
-        public async void HandleDMChannelAsync(Discord.Rest.RestDMChannel channel, Channel channelConfig)
+        public async void HandleDMChannelAsync(Discord.Rest.RestDMChannel channel, ChannelDescriptor channelConfig)
         {
             IMessage fromMessage = null;
             var page = 0;
@@ -54,7 +54,7 @@ namespace SocialAi
             }
         }
 
-        public async void HandleTextChannelAsync(Discord.Rest.RestTextChannel channel, Channel channelConfig)
+        public async void HandleTextChannelAsync(Discord.Rest.RestTextChannel channel, ChannelDescriptor channelConfig)
         {
             IMessage fromMessage = null;
             var page = 0;

@@ -26,13 +26,14 @@ namespace SocialAi
 
         public static void Test()
         {
-            var im = Bitmap.FromFile("d:\\dl\\2022-05-08-102334.jpeg");
-            var fakeGraphics = Graphics.FromImage(im);
             FileManager.Init(JsonSettings);
             var text = "When the expected memetic traction of an idea is conditional on how the idea is formatted, we do not merely bend the outward expression of a new idea into advantageous formatting—as if we think purely first, and only later publish instrumentally and politically. Rather, we begin to pre-format thinking itself, and avoid thoughts that are difficult to format advantageously. We feel that we publish purely and freely, but only because we've installed the instrumental filter at a deeper, almost unconscious level.";
             FileManager.GetTextInLines(text, 1024);
         }
 
+        //two main actual functions we do.
+        //1. backfill last N pages of messages in all monitored channels
+        //2. more interestingly, monitor new messages showing up in channels and get images as they come in.
         public async Task MainAsync()
         {
             var settingsPath = "c:\\git\\social-ai\\settings.json";
@@ -58,67 +59,12 @@ namespace SocialAi
                 Console.WriteLine("Bot is connected!");
                 return Task.CompletedTask;
             };
+            
             Handler = new Handler(JsonSettings, FileManager);
-
-
-            MonitorChannel();
+            var monitor = new ChannelMonitor(JsonSettings, Handler);
+            monitor.MonitorChannel(client);
 
             await Task.Delay(-1);
-        }
-
-        private void MonitorChannel()
-        {
-            IChannel channel;
-            foreach (var channelConfig in JsonSettings.Channels)
-            {
-                try
-                {
-                    channel = client.GetChannelAsync(channelConfig.ChannelId).Result;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                    continue;
-                }
-
-                var t = channel.GetChannelType();
-                switch (t)
-                {
-                    case ChannelType.Text:
-                        Handler.HandleTextChannelAsync((Discord.Rest.RestTextChannel)channel, channelConfig);
-                        Console.WriteLine($"Monitoring TextChannel: {channelConfig.Name}");
-                        break;
-                    case ChannelType.DM:
-                        Handler.HandleDMChannelAsync((Discord.Rest.RestDMChannel)channel, channelConfig);
-                        Console.WriteLine($"Monitoring DMChannel: {channelConfig.Name}");
-                        break;
-                    case ChannelType.Voice:
-                        break;
-                    case ChannelType.Group:
-                        break;
-                    case ChannelType.Category:
-                        break;
-                    case ChannelType.News:
-                        break;
-                    case ChannelType.Store:
-                        break;
-                    case ChannelType.NewsThread:
-                        break;
-                    case ChannelType.PublicThread:
-                        break;
-                    case ChannelType.PrivateThread:
-                        break;
-                    case ChannelType.Stage:
-                        break;
-                    case ChannelType.GuildDirectory:
-                        break;
-                    case ChannelType.Forum:
-                        break;
-                    case null:
-                        break;
-                }
-
-            }
         }
 
         private Task Log(Discord.LogMessage msg)
@@ -131,18 +77,25 @@ namespace SocialAi
         {
             var regot = await message.Channel.GetMessageAsync(message.Id);
             Console.WriteLine($"received {regot.Content}");
+            
+            //primitive command method.
             if (regot.Content.ToLower() == "clean")
             {
                 CleanTen();
                 return;
             }
+
+            //other chat comments.
             if (regot.Content[0] != '*')
             {
                 return;
             }
+
+            //actually download the image.
             Handler.ProcessMessageAsync(regot);
         }
 
+        //for party use - clean out older items in the share folder (so if you're running a slideshow, it'll hit new ones preferentially)
         private static void CleanTen()
         {
             var path = JsonSettings.ImageOutputFullPath;

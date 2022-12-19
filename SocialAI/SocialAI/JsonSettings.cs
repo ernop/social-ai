@@ -11,11 +11,11 @@
         //how far back to go downloading old pages
         public int PageLimit { get; set; } = 20;
 
-        public List<Channel> Channels{ get; set; } = new List<Channel>();
-        public List<Channel> DMChannels { get; set; } = new List<Channel>();
+        public List<ChannelDescriptor> Channels{ get; set; } = new List<ChannelDescriptor>();
+        public List<ChannelDescriptor> DMChannels { get; set; } = new List<ChannelDescriptor>();
     }
 
-    public class Channel 
+    public class ChannelDescriptor 
     {    
         public ulong ChannelId { get; set; }
         public string Name { get; set; }

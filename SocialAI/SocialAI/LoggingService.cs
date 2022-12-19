@@ -10,6 +10,7 @@ namespace SocialAi
             client.Log += LogAsync;
             command.Log += LogAsync;
         }
+
         private Task LogAsync(LogMessage message)
         {
             if (message.Exception is CommandException cmdException)
