@@ -97,7 +97,7 @@ namespace SocialAi
                     }
                     var prompt = new Prompt(mm.Content, mm.CleanContent);
                     var parsedMessage = new ParsedMessage(FileManager, prompt, att.ProxyUrl, att.Filename);
-                    await parsedMessage.SaveAndAnnotate();
+                    parsedMessage.SaveAndAnnotate();
                 }
             }
         }

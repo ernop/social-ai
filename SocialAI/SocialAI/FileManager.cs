@@ -78,7 +78,7 @@ namespace SocialAi
         }
 
 
-        public void Annotate(string fp, string? text)
+        public string Annotate(string fp, string? text)
         {
             var originalImage = Image.FromFile(fp);
             var originalSize = originalImage.Size;
@@ -108,6 +108,7 @@ namespace SocialAi
             }
             graphics.Save();
             im.Save(fp);
+            return fp;
         }
 
         public string? GetPathToSave(string filename)

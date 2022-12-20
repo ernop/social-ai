@@ -34,7 +34,7 @@ namespace SocialAI
         }
 
         [TestMethod]
-        public void DefalutPrompting()
+        public void DefaultPrompting()
         {
             var content = "** girl flips her  hair ** - <@331647167112413184> (metered, fast)";
             var cleanContent = "girl flips  her hair  - <Username#1234> (metered, fast)";

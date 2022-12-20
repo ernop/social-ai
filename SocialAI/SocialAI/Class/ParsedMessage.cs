@@ -1,4 +1,4 @@
-﻿using static SocialAi.Utils;
+﻿using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 
 namespace SocialAi
 {
@@ -25,8 +25,20 @@ namespace SocialAi
                 return false;
             }
             await DownloadImageAsync(path, ImageUrl);
-            FileManager.Annotate(path, Prompt.Message);
+            var fp = FileManager.Annotate(path, Prompt.Message);
+            AddExif(fp, Prompt);
             return true;
+        }
+
+        //unknown if this actually works or not
+        private void AddExif(string fp, Prompt prompt)
+        {
+            using (var image = SixLabors.ImageSharp.Image.Load(fp))
+            {
+                image.Metadata.ExifProfile = new ExifProfile();
+                image.Metadata.ExifProfile.SetValue(ExifTag.Artist, "Midjourney+SocialAI:https://github.com/ernop/social-ai/");
+                image.Metadata.ExifProfile.SetValue(ExifTag.UserComment, prompt.Content);
+            }
         }
 
         private async Task DownloadImageAsync(string path, string url)
