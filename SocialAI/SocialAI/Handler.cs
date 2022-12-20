@@ -87,7 +87,6 @@ namespace SocialAi
 
         public async void ProcessMessageAsync(IMessage mm)
         {
-            var s = mm.Content;
             if (mm.Attachments.Count > 0)
             {
                 foreach (var att in mm.Attachments)
@@ -96,9 +95,8 @@ namespace SocialAi
                     {
                         continue;
                     }
-                    var du = new DiscordUser();
-                    var prompt = GetPrompt(s);
-                    var parsedMessage = new ParsedMessage(FileManager, du, prompt, att.ProxyUrl, att.Filename);
+                    var prompt = new Prompt(mm.Content, mm.CleanContent);
+                    var parsedMessage = new ParsedMessage(FileManager, prompt, att.ProxyUrl, att.Filename);
                     await parsedMessage.SaveAndAnnotate();
                 }
             }

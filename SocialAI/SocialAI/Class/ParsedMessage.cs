@@ -5,15 +5,13 @@ namespace SocialAi
     public class ParsedMessage
     {
         public FileManager FileManager { get; set; }
-        public DiscordUser DiscordUser { get; set; }
         public Prompt Prompt { get; set; }
         public string ImageUrl { get; set; }
         public string Filename { get; set; }
 
-        public ParsedMessage(FileManager fm, DiscordUser discordUser, Prompt prompt, string imageUrl, string filename)
+        public ParsedMessage(FileManager fm, Prompt prompt, string imageUrl, string filename)
         {
             FileManager = fm;
-            DiscordUser = discordUser;
             Prompt = prompt;
             ImageUrl = imageUrl;
             Filename = filename;
