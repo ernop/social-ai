@@ -110,25 +110,20 @@ namespace SocialAi
             im.Save(fp);
         }
 
-        public string GetPathToSave(string filename)
+        public string? GetPathToSave(string filename)
         {
             if (string.IsNullOrEmpty(filename))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("missing filename");
             }
 
-            while (true)
+            var joined = $"{Settings.ImageOutputFullPath}/{filename}";
+            if (File.Exists(joined))
             {
-                var joined = $"{Settings.ImageOutputFullPath}/{filename}";
-                if (File.Exists(joined))
-                {
-                    break;
-                }
-
-                return joined;
+                return null;
             }
-            return "";
+
+            return joined;
         }
     }
-
 }

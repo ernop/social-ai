@@ -97,9 +97,9 @@ namespace SocialAi
                         continue;
                     }
                     var du = new DiscordUser();
-                    var p = GetPrompt(s);
-                    var ui = new ParsedMessage(FileManager, du, p, att.ProxyUrl, att.Filename);
-                    ui.Save();
+                    var prompt = GetPrompt(s);
+                    var parsedMessage = new ParsedMessage(FileManager, du, prompt, att.ProxyUrl, att.Filename);
+                    await parsedMessage.SaveAndAnnotate();
                 }
             }
         }

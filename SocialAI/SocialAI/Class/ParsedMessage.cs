@@ -19,10 +19,10 @@ namespace SocialAi
             Filename = filename;
         }
 
-        public async Task<bool> Save()
+        public async Task<bool> SaveAndAnnotate()
         {
             var path = FileManager.GetPathToSave(Filename);
-            if (string.IsNullOrEmpty(path))
+            if (path==null)
             {
                 return false;
             }
