@@ -8,7 +8,7 @@ namespace SocialAi
     {
         //the FULL message text
         public string? Content { get; set; }
-        
+
         //harder to parse, but has unredacted username
         public string? CleanContent { get; set; }
         public ulong DiscordMessageID { get; set; }
@@ -20,13 +20,29 @@ namespace SocialAi
         //annotater should call this to get text based on parsed version.
         public string GetAnnotation()
         {
-            return Message;
+            var res = $"{Message}";
+            if (false)
+            {
+                if (Chaos.HasValue)
+                {
+                    res += $" C:{Chaos}";
+                }
+                if (Niji.HasValue)
+                {
+                    res += $" <Niji>";
+                }
+                if (Seed.HasValue)
+                {
+                    res += $" Seed:<{Seed}>";
+                }
+            }
+            return res;
         }
-        
+
         public int? Version { get; set; }
         public int? Chaos { get; set; }
-
-        public long? Seed { get; set; } 
+        public bool? Niji { get; set; }
+        public long? Seed { get; set; }
         public long? Stylize { get; set; }
         //null=default
         public AR AR { get; set; }
@@ -76,12 +92,28 @@ namespace SocialAi
                 Version = int.Parse(versionChecker.Groups[1].Value);
             }
 
+            //cleaning up human part of message
+            var nijiChecker = new Regex(@"--niji").Match(remainingFullMessage);
+            if (nijiChecker.Success)
+            {
+                remainingFullMessage = remainingFullMessage.Replace(nijiChecker.Groups[0].Value, "");
+                remainingFullMessage = Condense(remainingFullMessage);
+                Niji = true;
+            }
+
             var chaosChecker = new Regex(@"--c (\d+)").Match(remainingFullMessage);
             if (chaosChecker.Success)
             {
                 remainingFullMessage = remainingFullMessage.Replace(chaosChecker.Groups[0].Value, "");
                 remainingFullMessage = Condense(remainingFullMessage);
                 Chaos = int.Parse(chaosChecker.Groups[1].Value);
+
+                var chaosChecker2 = new Regex(@"--c (\d+)").Match(remainingFullMessage);
+                if (chaosChecker2.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(chaosChecker2.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+                }
             }
 
             var arChecker = new Regex(@"--ar (\d):(\d)").Match(remainingFullMessage);

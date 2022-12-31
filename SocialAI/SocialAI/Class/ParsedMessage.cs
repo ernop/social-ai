@@ -25,7 +25,7 @@ namespace SocialAi
                 return false;
             }
             await DownloadImageAsync(path, ImageUrl);
-            var fp = FileManager.Annotate(path, Prompt.Message);
+            var fp = FileManager.Annotate(path, Prompt.GetAnnotation());
             AddExif(fp, Prompt);
             return true;
         }
