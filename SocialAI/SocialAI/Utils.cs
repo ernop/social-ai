@@ -7,7 +7,7 @@ using System.Drawing.Text;
 public class FileManager
 {
     public string ImageFolderFullPath { get; set; }
-    public static int LineSize { get; set; } = 45;
+    public static int LineSize { get; set; } = 53;
     public static int FontSize { get; set; } = 36;
     public static int TextExtraY { get; set; } = LineSize / 2+5;
     public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
