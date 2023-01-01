@@ -1,40 +1,53 @@
-﻿using static Utils;
+﻿using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 
-public class ParsedMessage
+namespace SocialAi
 {
-    public FileManager FileManager { get; set; }
-    public DiscordUser DiscordUser { get; set; }
-    public Prompt Prompt { get; set; }
-    public string ImageUrl { get; set; }
-    public string Filename { get; set; }
-
-    public ParsedMessage(FileManager fm, DiscordUser discordUser, Prompt prompt, string imageUrl, string filename)
+    public class ParsedMessage
     {
-        FileManager = fm;
-        DiscordUser = discordUser;
-        Prompt = prompt;
-        ImageUrl = imageUrl;
-        Filename = filename; 
-    }
+        public FileManager FileManager { get; set; }
+        public Prompt Prompt { get; set; }
+        public string ImageUrl { get; set; }
+        public string Filename { get; set; }
 
-    public async Task<bool> Save()
-    {
-        var path = FileManager.GetPathToSave(Filename);
-        if (string.IsNullOrEmpty(path))
+        public ParsedMessage(FileManager fm, Prompt prompt, string imageUrl, string filename)
         {
-            return false;
+            FileManager = fm;
+            Prompt = prompt;
+            ImageUrl = imageUrl;
+            Filename = filename;
         }
-        await DownloadImageAsync(path, ImageUrl);
-        FileManager.Annotate(path, Prompt.Message);
-        return true;
-    }
 
-    private async Task DownloadImageAsync(string path, string url)
-    {
-        var uri = new Uri(url);
-        using var httpClient = new HttpClient();
+        public async Task<bool> SaveAndAnnotate()
+        {
+            var path = FileManager.GetPathToSave(Filename);
+            if (path==null)
+            {
+                return false;
+            }
+            await DownloadImageAsync(path, ImageUrl);
+            var fp = FileManager.Annotate(path, Prompt.GetAnnotation());
+            AddExif(fp, Prompt);
+            return true;
+        }
 
-        var imageBytes = await httpClient.GetByteArrayAsync(uri);
-        await File.WriteAllBytesAsync(path, imageBytes);
+        //unknown if this actually works or not
+        private void AddExif(string fp, Prompt prompt)
+        {
+            using (var image = SixLabors.ImageSharp.Image.Load(fp))
+            {
+                image.Metadata.ExifProfile = new ExifProfile();
+                image.Metadata.ExifProfile.SetValue(ExifTag.Artist, "Midjourney+SocialAI:https://github.com/ernop/social-ai/");
+                image.Metadata.ExifProfile.SetValue(ExifTag.UserComment, prompt.Content);
+            }
+        }
+
+        private async Task DownloadImageAsync(string path, string url)
+        {
+            var uri = new Uri(url);
+            using var httpClient = new HttpClient();
+
+            var imageBytes = await httpClient.GetByteArrayAsync(uri);
+            await File.WriteAllBytesAsync(path, imageBytes);
+        }
     }
 }

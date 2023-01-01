@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32526.322
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocialAI", "SocialAI\SocialAI.csproj", "{556CF584-B30E-4F6C-BCDE-57CAFA09D01D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocialAI", "SocialAI\SocialAI.csproj", "{556CF584-B30E-4F6C-BCDE-57CAFA09D01D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocialAI.Test", "SocialAI.Test\SocialAI.Test.csproj", "{76C3C71D-5AF4-4BDE-AE85-764E2B6D4F6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{556CF584-B30E-4F6C-BCDE-57CAFA09D01D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{556CF584-B30E-4F6C-BCDE-57CAFA09D01D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{556CF584-B30E-4F6C-BCDE-57CAFA09D01D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76C3C71D-5AF4-4BDE-AE85-764E2B6D4F6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76C3C71D-5AF4-4BDE-AE85-764E2B6D4F6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76C3C71D-5AF4-4BDE-AE85-764E2B6D4F6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76C3C71D-5AF4-4BDE-AE85-764E2B6D4F6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
