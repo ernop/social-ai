@@ -37,6 +37,7 @@ namespace SocialAi
                 catch (Exception ex)
                 {
                     //this hits sometimes, unclear reasons likely due to bad coercion
+                    Console.WriteLine("Failure to get channel.");
                     Console.WriteLine(ex);
                     continue;
                 }

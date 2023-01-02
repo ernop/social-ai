@@ -108,6 +108,7 @@ namespace SocialAi
             }
             graphics.Save();
             im.Save(fp);
+            Console.WriteLine($"Successfully saved new fp: {fp}");
             return fp;
         }
 
@@ -121,6 +122,15 @@ namespace SocialAi
             var joined = $"{Settings.ImageOutputFullPath}/{filename}";
             if (File.Exists(joined))
             {
+                Console.WriteLine($"Skipping existing: {joined}");
+                return null;
+            }
+
+            //also exclude downloading if it exists in the backup folder
+            var joinedCLeaned = $"{Settings.CleanedImageOutputFullPath}/{filename}";
+            if (File.Exists(joinedCLeaned))
+            {
+                Console.WriteLine($"Skipping existing cleaned: {joinedCLeaned}");
                 return null;
             }
 

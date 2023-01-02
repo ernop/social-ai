@@ -12,7 +12,7 @@ using System.Threading.Channels;
 using System.Runtime;
 namespace SocialAi
 {
-    public  class Handler
+    public class Handler
     {
         private JsonSettings Settings { get; set; }
         private FileManager FileManager { get; set; }
@@ -69,18 +69,20 @@ namespace SocialAi
                     pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
                 }
 
-                Console.WriteLine($"TextChannelId: {channelConfig.Name}:{channelConfig.ChannelId} - page:{page} - {pages.CountAsync()}");
+                Console.WriteLine($"Channel:{channelConfig.Name} - page:{page} - {pages.CountAsync()}");
 
                 await foreach (var awaitedPage in pages)
                 {
                     foreach (var mm in awaitedPage)
                     {
+                        Console.WriteLine($"\tmm{channelConfig}-{mm.Content}");
                         fromMessage = mm;
                         ProcessMessageAsync(mm);
                         await Task.Delay(1);
                     }
                 }
                 page++;
+                await Task.Delay(1);
             }
         }
 
@@ -97,7 +99,14 @@ namespace SocialAi
                     var prompt = new Prompt(mm.Content, mm.CleanContent);
                     if (prompt.Content == "") { return; }
                     var parsedMessage = new ParsedMessage(FileManager, prompt, att.ProxyUrl, att.Filename);
-                    parsedMessage.SaveAndAnnotate();
+                    try
+                    {
+                        await parsedMessage.SaveAndAnnotate();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Exception: {ex.Message}");
+                    }
                 }
             }
         }

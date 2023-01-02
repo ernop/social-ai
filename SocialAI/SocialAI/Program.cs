@@ -59,7 +59,7 @@ namespace SocialAi
                 Console.WriteLine("Bot is connected!");
                 return Task.CompletedTask;
             };
-            
+
             Handler = new Handler(JsonSettings, FileManager);
             var monitor = new ChannelMonitor(JsonSettings, Handler);
             monitor.MonitorChannel(client);
@@ -77,22 +77,17 @@ namespace SocialAi
         {
             var regot = await message.Channel.GetMessageAsync(message.Id);
             Console.WriteLine($"received {regot.Content}");
-            
             //primitive command method.
             if (regot.Content.ToLower() == "clean")
             {
                 CleanTen();
-                return;
             }
 
             //other chat comments.
-            if (regot.Content[0] != '*')
+            else if (regot.Content[0] == '*')
             {
-                return;
+                Handler.ProcessMessageAsync(regot);
             }
-
-            //actually download the image.
-            Handler.ProcessMessageAsync(regot);
         }
 
         //for party use - clean out older items in the share folder (so if you're running a slideshow, it'll hit new ones preferentially)
