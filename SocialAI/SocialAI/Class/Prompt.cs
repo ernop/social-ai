@@ -14,6 +14,9 @@ namespace SocialAi
         public ulong DiscordMessageID { get; set; }
         public DiscordUser DiscordUser { get; set; }
 
+        //linked images from the prompt, works with "blend"
+        public IList<string> ReferencedImages { get; set; } = new List<string>();
+
         //the human part of the text
         public string Message { get; set; }
 
@@ -21,7 +24,7 @@ namespace SocialAi
         public string GetAnnotation()
         {
             var res = $"{Message}";
-            if (false)
+            if (false) //we exclude these now for cleanliness.
             {
                 if (Chaos.HasValue)
                 {
@@ -52,18 +55,24 @@ namespace SocialAi
             return m.Replace("  ", " ").Trim();
         }
 
+        /// <summary>
+        /// Rip up the prompt pulling out the various bits of information.
+        /// 
+        /// Note: Prompts are super messy and can have multiple copies of each qualifier in them, first one takes precedence.
+        /// </summary>
         public Prompt(string content, string cleanContent)
         {
             Content = content;
             //content examples
             //"** girl flips her hair --v 4** - <@331647167112413184> (metered, fast)"
             //"**marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44** - <@331647167112413184> (fast)"
+            //https://s.mj.run/Wr7eOBOD494 https://s.mj.run/JrtVcYHZsUU --v 4 - @XXX
 
             CleanContent = cleanContent;
-            //cleanContent = "marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44 - <Brouhahaha#7120> (fast)"
+            //cleanContent = "marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44 - <X#7120> (fast)"
 
             //trim leading **
-            if (content.Length < 2 || content.IndexOf("**")==-1)
+            if (content.Length < 2 || content.IndexOf("**") == -1)
             {
                 return;
             }
@@ -147,12 +156,29 @@ namespace SocialAi
                 Stylize = int.Parse(stylizeChecker.Groups[1].Value);
             }
 
+            //remove and save image links for inclusion in the output image.
+            //NOTE that 'cleanContent''s version of these links is apparently broken, missing a trailing '>'
+            while (true)
+            {
+                var imageChecker= new Regex(@"<(https://s.mj.run/[^\s]+)>").Match(remainingFullMessage);
+                if (imageChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(imageChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+                    var image = imageChecker.Groups[1].Value;
+                    ReferencedImages.Add(image);
+                    continue;
+                }
+                break;
+            }
+
             remainingFullMessage = Condense(remainingFullMessage);
 
             Message = remainingFullMessage;
         }
     }
 
+    //An aspect ratio holder    
     public class AR
     {
         public int Width { get; set; }

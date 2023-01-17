@@ -13,12 +13,12 @@ namespace SocialAi
 
         //Unused currently, but we should move text in a bit to make it more visible in twitter previews where now it's slightly cut off.
         public static int HorizontalBuffer { get; set; } = 10;
-        
+
         //extra y to add to images in annotation section as a kind of vertical buffer.
         public static int TextExtraY { get; set; } = LineSize / 2 + 5;
         public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
         public JsonSettings Settings { get; set; }
-        
+
         // A fake object required to calculate text widths.
         public Graphics FakeGraphics { get; set; }
 
@@ -37,7 +37,7 @@ namespace SocialAi
         public List<string> GetTextInLines(string? text, int pixelWidth)
         {
             //for some reason we need a  "real" graphics object to calculate text widths based off of.
-            
+
             var remainingText = text + " ";
 
             var lines = new List<string>();
@@ -61,7 +61,7 @@ namespace SocialAi
                         continue;
                     }
                     var candidateText = remainingText.Substring(0, testLength);
-                    
+
                     var w = FakeGraphics.MeasureString(candidateText, Font);
                     if (w.Width < pixelWidth)
                     {
@@ -76,33 +76,81 @@ namespace SocialAi
 
             return lines;
         }
+        
 
-
-        public string Annotate(string fp, string? text)
+        //combine with outer method but whatever.
+        private async Task<Stream> GetImageByteStreamAsync(string url)
         {
-            var originalImage = Image.FromFile(fp);
-            var originalSize = originalImage.Size;
-            var fakeGraphics = Graphics.FromImage(originalImage);
-          
-            var lines = GetTextInLines(text, originalSize.Width);
-            fakeGraphics.Dispose();
+            var uri = new Uri(url);
+            using var httpClient = new HttpClient();
+
+            var stream = await httpClient.GetStreamAsync(uri);
+            return stream;
+        }
+
+        public async Task<string> Annotate(string fp, Prompt prompt)
+        {
+            var text = prompt.GetAnnotation();
+
+            var outputImageToAnnotate = Image.FromFile(fp);
+            var holdImages = new List<Image>();
+            Size outputSize;
+            //output is the original size, plus some Y increase to fit the text.
+            //plus, if the image were constructed from other images through "blend" or similar
+            //expand the X axis much more to fit them in too.
+
+            var outputOffsetX = 0;
+            
+            var maxYSeen = outputImageToAnnotate.Height;
+
+            //note that we jam the images together tightly. 
+            //investigate adding small "+" between them and a final "=" plus some extra width, possibly.
+            if (prompt.ReferencedImages != null && prompt.ReferencedImages.Count > 0)
+            {
+                //download them, and figure out their sizes.
+                foreach (var imgUrl in prompt.ReferencedImages)
+                {
+                    var stream = await GetImageByteStreamAsync(imgUrl);
+                    var refImage = Image.FromStream(stream);
+                    holdImages.Add(refImage);
+                    outputOffsetX += refImage.Width;
+                    maxYSeen = Math.Max(maxYSeen, refImage.Height);
+
+                }
+                outputSize = new Size(outputOffsetX + outputImageToAnnotate.Size.Width, maxYSeen);
+            }
+            else
+            {
+                outputSize = outputImageToAnnotate.Size;
+            }
+
+            var lines = GetTextInLines(text, outputSize.Width);
 
             var extraYPixels = LineSize * lines.Count() + TextExtraY;
 
-            var im = new Bitmap(originalSize.Width, originalSize.Height + extraYPixels);
+            var im = new Bitmap(outputSize.Width, outputSize.Height + extraYPixels);
 
             var graphics = Graphics.FromImage(im);
             graphics.Clear(Color.Black);
-            graphics.DrawImage(originalImage, new Point(0, 0));
 
-            originalImage.Dispose();
+            var holdOffsetX = 0;
+            foreach (var holdImage in holdImages)
+            {
+                graphics.DrawImage(holdImage, new Point(holdOffsetX, 0));
+                holdOffsetX += holdImage.Width;
+            }
+
+            graphics.DrawImage(outputImageToAnnotate, new Point(outputOffsetX, 0));
+
+            outputImageToAnnotate.Dispose();
 
             var ii = 0;
             var brush = new SolidBrush(Color.White);
 
+            //note that we draw the text fully left-aligned which may be weird for blend images.
             foreach (var line in lines)
             {
-                var pos = (float)Math.Floor((double)(originalSize.Height + TextExtraY / 2 + ii * LineSize));
+                var pos = (float)Math.Floor((double)(maxYSeen + TextExtraY / 2 + ii * LineSize));
                 ii += 1;
                 graphics.DrawString(line, Font, brush, new PointF(0, pos));
             }
