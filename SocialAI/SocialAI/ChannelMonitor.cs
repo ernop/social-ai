@@ -33,7 +33,7 @@ namespace SocialAi
                 try
                 {
                     channel = client.GetChannelAsync(channelConfig.ChannelId).Result;
-                }
+                }                
                 catch (Exception ex)
                 {
                     //this hits sometimes, unclear reasons likely due to bad coercion

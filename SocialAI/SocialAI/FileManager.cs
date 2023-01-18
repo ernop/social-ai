@@ -76,7 +76,7 @@ namespace SocialAi
 
             return lines;
         }
-        
+
 
         //combine with outer method but whatever.
         private async Task<Stream> GetImageByteStreamAsync(string url)
@@ -86,6 +86,26 @@ namespace SocialAi
 
             var stream = await httpClient.GetStreamAsync(uri);
             return stream;
+        }
+
+        /// <summary>
+        /// resize proportionally.
+        /// </summary>
+        public Image ResizeImage(Image im, int newMaxHeightPixels)
+        {
+            var ratio = (double)newMaxHeightPixels / im.Height;
+            var newWidth = (int)(im.Width * ratio);
+            var newHeight = (int)(im.Height * ratio);
+            var newImage = new Bitmap(newWidth, newHeight);
+            using (var graphics = Graphics.FromImage(newImage))
+            {
+                graphics.CompositingQuality = CompositingQuality.HighQuality;
+                graphics.SmoothingMode = SmoothingMode.HighQuality;
+                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                graphics.DrawImage(im, 0, 0, newWidth, newHeight);
+            }
+            im.Dispose();
+            return newImage;
         }
 
         public async Task<string> Annotate(string fp, Prompt prompt)
@@ -100,7 +120,7 @@ namespace SocialAi
             //expand the X axis much more to fit them in too.
 
             var outputOffsetX = 0;
-            
+
             var maxYSeen = outputImageToAnnotate.Height;
 
             //note that we jam the images together tightly. 
@@ -111,7 +131,22 @@ namespace SocialAi
                 foreach (var imgUrl in prompt.ReferencedImages)
                 {
                     var stream = await GetImageByteStreamAsync(imgUrl);
-                    var refImage = Image.FromStream(stream);
+                    Image refImage;
+                    try
+                    {
+                        refImage = Image.FromStream(stream);
+                    }
+                    catch (Exception ex)
+                    {
+                        //this image will simply fail.
+                        continue;
+                    }
+
+                    if (refImage.Height > 1024)
+                    {
+                        refImage = ResizeImage(refImage, 1024);
+                    }
+
                     holdImages.Add(refImage);
                     outputOffsetX += refImage.Width;
                     maxYSeen = Math.Max(maxYSeen, refImage.Height);
