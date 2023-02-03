@@ -2,6 +2,9 @@
 
 namespace SocialAi
 {
+    /// <summary>
+    /// kind of a useless class, just stores actions that can be done on a Prompt
+    /// </summary>
     public class ParsedMessage
     {
         public FileManager FileManager { get; set; }
@@ -17,7 +20,7 @@ namespace SocialAi
             Filename = filename;
         }
 
-        public async Task<bool> SaveAndAnnotate()
+        public async Task<bool> SaveAndAnnotateImage()
         {
             var path = FileManager.GetPathToSave(Filename);
             if (path==null)
@@ -30,7 +33,9 @@ namespace SocialAi
             return true;
         }
 
-        //unknown if this actually works or not
+        /// <summary>
+        /// unknown if this actually works or not
+        /// </summary>
         private void AddExif(string fp, Prompt prompt)
         {
             using (var image = SixLabors.ImageSharp.Image.Load(fp))

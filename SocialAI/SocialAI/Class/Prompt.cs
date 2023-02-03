@@ -50,6 +50,14 @@ namespace SocialAi
         //null=default
         public AR AR { get; set; }
 
+        public GenerationTypeEnum GenerationType { get; set; }
+        
+        //when the message was created
+        public DateTime CreatedAtUtc { get; set; }
+
+        //which channel it was sent on.
+        public string CreatedChannelName { get; set; }
+
         public string Condense(string m)
         {
             return m.Replace("  ", " ").Trim();
@@ -68,6 +76,11 @@ namespace SocialAi
             //"**marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44** - <@331647167112413184> (fast)"
             //https://s.mj.run/Wr7eOBOD494 https://s.mj.run/JrtVcYHZsUU --v 4 - @XXX
 
+            //upscales look like this: "anime painting of gandalf leading the ancient israelites --v 4 --ar 2:1 --c 100 - Upscaled by @Username#9999 (fast)"
+            //upscale light looks like this: "<https://s.mj.run/xI98Y80tUrY <https://s.mj.run/ylVDjpAtLpQ --v 4 - Upscaled (Light) by @Username#9999 (fast)"
+            //normal generations look like this: "twin peaks --v 4 --ar 2:1 --c 100 - @Username#9999 (fast)"
+            //there are many other annoying types.
+
             CleanContent = cleanContent;
             //cleanContent = "marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44 - <X#7120> (fast)"
 
@@ -78,10 +91,83 @@ namespace SocialAi
             }
             var remainingFullMessage = Condense(content).Substring(2).Trim();
 
-            var usernameChecker = new Regex(@"<(\S+)#(\d\d\d\d)>").Match(cleanContent);
-            if (usernameChecker.Success)
+            
+            //we derive the type of action from the random text mj appends to the end.
+            var upscaleChecker = new Regex(@"Upscaled by @(\S+#\d{4,4})").Match(cleanContent);
+            if (upscaleChecker.Success)
             {
-                DiscordUser = new DiscordUser(usernameChecker.Groups[1].Value);
+                GenerationType = GenerationTypeEnum.Upscale;
+                cleanContent = cleanContent.Replace(upscaleChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(upscaleChecker.Groups[1].Value);
+            }
+
+            var upscaleLightChecker = new Regex(@"Upscaled \(Light\) by @(\S+#\d{4,4})").Match(cleanContent);
+            if (upscaleLightChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.UpscaleLight;
+                cleanContent = cleanContent.Replace(upscaleLightChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(upscaleLightChecker.Groups[1].Value);
+            }
+
+            var upscaleBetaChecker = new Regex(@"Upscaled \(Beta\) by @(\S+#\d{4,4})").Match(cleanContent);
+            if (upscaleBetaChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.UpscaleBeta;
+                cleanContent = cleanContent.Replace(upscaleBetaChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(upscaleBetaChecker.Groups[1].Value);
+            }
+
+            var remixChecker = new Regex(@"Remix by @(\S+#\d{4,4})").Match(cleanContent);
+            if (remixChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.Remix;
+                cleanContent = cleanContent.Replace(remixChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(remixChecker.Groups[1].Value);
+            }
+
+            var upscaleAnimeChecker = new Regex(@"Upscaled \(Anime\) by @(\S+#\d{4,4})").Match(cleanContent);
+            if (upscaleAnimeChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.UpscaleAnime;
+                cleanContent = cleanContent.Replace(upscaleAnimeChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(upscaleAnimeChecker.Groups[1].Value);
+            }
+
+            var upscaleMaxChecker= new Regex(@"Upscaled \(Max\) by @(\S+#\d{4,4})").Match(cleanContent);
+            if (upscaleMaxChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.UpscaleMax;
+                cleanContent = cleanContent.Replace(upscaleMaxChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(upscaleMaxChecker.Groups[1].Value);
+            }
+
+            var normalGenerationChecker = new Regex(@" - @(\S+#\d{4,4})").Match(cleanContent);
+            if (normalGenerationChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.NormalGeneration;
+                cleanContent = cleanContent.Replace(normalGenerationChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(normalGenerationChecker.Groups[1].Value);
+            }
+
+            var variationsChecker = new Regex(@" Variations by @(\S+#\d{4,4})").Match(cleanContent);
+            if (variationsChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.Variations;
+                cleanContent = cleanContent.Replace(variationsChecker.Groups[0].Value, "");
+                cleanContent = Condense(cleanContent);
+                DiscordUser = new DiscordUser(variationsChecker.Groups[1].Value);
+            }
+
+            if (DiscordUser == null)
+            {
+               var a = 4;
             }
 
             var parts = remainingFullMessage.Split("**");

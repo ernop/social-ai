@@ -21,13 +21,17 @@ namespace SocialAi
         private static FileManager FileManager { get; set; } = new FileManager();
         private static JsonSettings JsonSettings { get; set; }
 
-        private static Handler Handler { get; set; }
+        private static ChannelHandler ChannelHandler { get; set; }
 
         //two main actual functions we do.
         //1. backfill last N pages of messages in all monitored channels
         //2. more interestingly, monitor new messages showing up in channels and get images as they come in.
         public async Task MainAsync()
         {
+            //modify this to control.
+            var am = ActionMethod.SavePrompts;
+            am = ActionMethod.BackfillAndMonitor;
+
             var settingsPath = "d:\\proj\\social-ai\\social-ai\\settings.json";
             var txt = File.ReadAllText(settingsPath);
             JsonSettings = JsonConvert.DeserializeObject<JsonSettings>(txt);
@@ -44,20 +48,122 @@ namespace SocialAi
 
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
+            IChannel channel;
+            ChannelHandler = new ChannelHandler(JsonSettings, FileManager);
 
-            client.MessageReceived += MessageReceived;
-
-            client.Ready += () =>
+            foreach (var channelConfig in JsonSettings.Channels)
             {
-                Console.WriteLine("Bot is connected!");
-                return Task.CompletedTask;
-            };
+                try
+                {
+                    channel = client.GetChannelAsync(channelConfig.ChannelId).Result;
+                }
+                catch (Exception ex)
+                {
+                    //this hits sometimes, unclear reasons likely due to bad coercion
+                    Console.WriteLine("Failure to get channel.");
+                    Console.WriteLine(ex);
+                    continue;
+                }
 
-            Handler = new Handler(JsonSettings, FileManager);
-            var monitor = new ChannelMonitor(JsonSettings, Handler);
-            monitor.MonitorChannel(client);
+                var channelType = channel.GetChannelType();
+                if (channelType != ChannelType.Text)
+                {
+                    Console.WriteLine($"Can only handle Text ChannelType right now. {channelType}, {channel}");
+                }
+                switch (am)
+                {
+                    case ActionMethod.BackfillAndMonitor:
 
-            await Task.Delay(-1);
+                        //setup monitoring
+                        client.MessageReceived += MessageReceived;
+
+                        client.Ready += () =>
+                        {
+                            Console.WriteLine("Bot is connected!");
+                            return Task.CompletedTask;
+                        };
+
+                        //backfill
+
+                        ChannelHandler.BackfillImagesFromTextChannelAsync((Discord.Rest.RestTextChannel)channel, channelConfig);
+                        Console.WriteLine($"BackfillImagesFromTextChannelAsync: {channelConfig.Name}");
+                        
+                        //now, also wait forever monitoring the channel.
+                        await Task.Delay(-1);
+
+                        break;
+                    case ActionMethod.SavePrompts:
+                        if (string.IsNullOrEmpty(JsonSettings.UsernameForPromptDownloading))
+                        {
+                            throw new Exception("Configuration problem - no UsernameForPromptDownloading found in settings");
+                        }
+                        try
+                        {
+                            //this is very annoying. you can't get into some types of channels. TODO figure this out.                            
+                            var convertedChannel = (Discord.Rest.RestTextChannel)channel;
+                            var prompts = ChannelHandler.DownloadAllPromptsFromTextChannelAsync(convertedChannel, channelConfig, JsonSettings.UsernameForPromptDownloading);
+                            SavePrompts(prompts, JsonSettings.UsernameForPromptDownloading, channelConfig.Name);
+                        }
+                        catch (Exception ex)
+                        {
+                            //Cannot get this, probably cause it's not set up with the right permissions?
+                            //var convertedChannlB = (Discord.WebSocket.SocketTextChannel)channel;
+                            //var prompts = ChannelHandler.DownloadAllPromptsFromTextChannelAsync(null, channelConfig, JsonSettings.UsernameForPromptDownloading);
+                            //SavePrompts(prompts, JsonSettings.UsernameForPromptDownloading, channelConfig.Name);
+                            Console.WriteLine($"Error on channel: {channelConfig.Name}");
+                            return;
+                            //throw;
+                        }
+
+                        Console.WriteLine($"DownloadAllPromptsFromTextChannelAsync: {channelConfig.Name}");
+                        break;
+                }
+            }
+        }
+
+
+        private void SavePrompts(Task<List<Prompt>> prompts, string username, string rawChannelName)
+        {
+            var safeChannelName = Path.GetFileName(rawChannelName);
+            var targetPromptFilename = $"{JsonSettings.ImageOutputFullPath}/{username.Split('#')[0]}_{safeChannelName}_prompts.txt";
+            using (StreamWriter writer = new StreamWriter(targetPromptFilename))
+            {
+                writer.WriteLine("Message\tGenerationType\tVersion\tChaos\tAR\tseed\tstylize\tniji\tCreatedAtUtc\tCreatedChannelName\trefsCSV");
+                foreach (var prompt in prompts.Result)
+                {
+                    var parts = new List<string>();
+                    parts.Add(prompt.Message);
+                    parts.Add(prompt.GenerationType.ToString());
+                    parts.Add(prompt.Version.ToString());
+                    parts.Add(prompt.Chaos.ToString());
+
+                    var theAr = "";
+                    if (prompt.AR != null)
+                    {
+                        theAr = $"{prompt.AR.Width}:{prompt.AR.Height}";
+                    }
+                    parts.Add(theAr);
+
+                    parts.Add(prompt.Seed?.ToString() ?? "");
+                    parts.Add(prompt.Stylize?.ToString() ?? "");
+                    parts.Add(prompt.Niji?.ToString() ?? "");
+
+                    parts.Add(prompt.CreatedAtUtc.ToString());
+                    parts.Add(prompt.CreatedChannelName);
+
+                    var refs = "";
+                    if (prompt.ReferencedImages?.Count > 0)
+                    {
+                        refs = string.Join(',', prompt.ReferencedImages);
+                    }
+                    parts.Add(refs);
+
+
+                    var joined = string.Join("\t", parts);
+                    writer.WriteLine(joined);
+                }
+
+            }
         }
 
         private Task Log(Discord.LogMessage msg)
@@ -79,7 +185,7 @@ namespace SocialAi
             //other chat comments.
             else if (regot.Content[0] == '*')
             {
-                Handler.ProcessMessageAsync(regot);
+                ChannelHandler.DownloadImagesFromMessageAsync(regot);
             }
         }
 

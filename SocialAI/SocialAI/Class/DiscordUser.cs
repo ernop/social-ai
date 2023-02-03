@@ -9,5 +9,10 @@ namespace SocialAi
         {
             DiscordUsername = discordUsername;
         }
+
+        public override string ToString()
+        {
+            return $"DiscordUser: {DiscordUsername}";
+        }
     }
 }
