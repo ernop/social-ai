@@ -23,13 +23,6 @@ namespace SocialAi
 
         private static Handler Handler { get; set; }
 
-        public static void Test()
-        {
-            FileManager.Init(JsonSettings);
-            var text = "When the expected memetic traction of an idea is conditional on how the idea is formatted, we do not merely bend the outward expression of a new idea into advantageous formatting—as if we think purely first, and only later publish instrumentally and politically. Rather, we begin to pre-format thinking itself, and avoid thoughts that are difficult to format advantageously. We feel that we publish purely and freely, but only because we've installed the instrumental filter at a deeper, almost unconscious level.";
-            FileManager.GetTextInLines(text, 1024);
-        }
-
         //two main actual functions we do.
         //1. backfill last N pages of messages in all monitored channels
         //2. more interestingly, monitor new messages showing up in channels and get images as they come in.
