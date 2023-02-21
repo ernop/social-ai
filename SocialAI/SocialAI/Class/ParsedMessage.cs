@@ -27,7 +27,11 @@ namespace SocialAi
             {
                 return false;
             }
-            await DownloadImageAsync(path, ImageUrl);
+            await DownloadImageAsync(path, ImageUrl, Prompt.CreatedAtUtc);
+
+            //here I should artificially set the created & updated date of the file to the timestamp, so sorting works properly
+            //generally this will be better for users.
+
             var fp = await FileManager.Annotate(path, Prompt);
             AddExif(fp, Prompt);
             return true;
@@ -46,13 +50,14 @@ namespace SocialAi
             }
         }
 
-        private async Task DownloadImageAsync(string path, string url)
+        private async Task DownloadImageAsync(string path, string url, DateTime createdAtUtc)
         {
             var uri = new Uri(url);
             using var httpClient = new HttpClient();
 
             var imageBytes = await httpClient.GetByteArrayAsync(uri);
             await File.WriteAllBytesAsync(path, imageBytes);
+            File.SetLastWriteTime(path, createdAtUtc);
         }
     }
 }

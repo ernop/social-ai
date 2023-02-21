@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.Tracing;
+﻿using Discord;
+
+using System.Diagnostics.Tracing;
 using System.Reactive.Joins;
 using System.Text.RegularExpressions;
 
@@ -68,9 +70,12 @@ namespace SocialAi
         /// 
         /// Note: Prompts are super messy and can have multiple copies of each qualifier in them, first one takes precedence.
         /// </summary>
-        public Prompt(string content, string cleanContent)
+        public Prompt(string content, IMessage discordMessage)
         {
             Content = content;
+            var cleanContent = discordMessage.CleanContent;
+            CreatedAtUtc = discordMessage.Timestamp.UtcDateTime;
+            CreatedChannelName = discordMessage.Channel.Name;
             //content examples
             //"** girl flips her hair --v 4** - <@331647167112413184> (metered, fast)"
             //"**marine biologist facing the sun, sunset, on the beach --v 4 --ar 2:3 --c 44** - <@331647167112413184> (fast)"

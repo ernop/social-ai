@@ -217,6 +217,7 @@ namespace SocialAi
                 return null;
             }
 
+            Console.WriteLine($"Will download: {joined}");
             return joined;
         }
     }

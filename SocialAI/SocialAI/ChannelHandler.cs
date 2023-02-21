@@ -56,7 +56,6 @@ namespace SocialAi
                 {
                     foreach (var message in awaitedPage)
                     {
-                        //Console.WriteLine($"\tmm{channelConfig}-{message.Content}");
                         fromMessage = message;
                         gotOne = true;
 
@@ -67,7 +66,6 @@ namespace SocialAi
                         }
                         if (prompt.DiscordUser.DiscordUsername != username)
                         {
-                            //Console.WriteLine($"Not the user {prompt.DiscordUser.DiscordUsername}");
                             continue;
                         }
                         prompts.Add(prompt);
@@ -88,25 +86,25 @@ namespace SocialAi
             var page = 0;
             while (page < Settings.PageLimit)
             {
-                IAsyncEnumerable<IReadOnlyCollection<IMessage>>? pages;
+                IAsyncEnumerable<IReadOnlyCollection<IMessage>>? messages;
                 if (fromMessage == null)
                 {
-                    pages = channel.GetMessagesAsync();
+                    messages = channel.GetMessagesAsync();
                 }
                 else
                 {
-                    pages = channel.GetMessagesAsync(fromMessage, Direction.Before);
+                    messages = channel.GetMessagesAsync(fromMessage, Direction.Before);
                 }
 
-                Console.WriteLine($"Channel:{channelConfig.Name} - page:{page} - {pages.CountAsync()}");
+                Console.WriteLine($"Channel:{channelConfig.Name} - page:{page} - {messages.CountAsync()}");
 
-                await foreach (var awaitedPage in pages)
+                await foreach (var awaitedMessage in messages)
                 {
-                    foreach (var mm in awaitedPage)
+                    foreach (var message in awaitedMessage)
                     {
-                        Console.WriteLine($"\tmm{channelConfig}-{mm.Content}");
-                        fromMessage = mm;
-                        DownloadImagesFromMessageAsync(mm);
+                        //Console.WriteLine($"\tmm{channelConfig}-{message.Content}");
+                        fromMessage = message;
+                        DownloadImagesFromMessageAsync(message);
                         await Task.Delay(1);
                     }
                 }
@@ -142,7 +140,7 @@ namespace SocialAi
             }
 
 
-            var prompt = new Prompt(discordMessage.Content, discordMessage.CleanContent);
+            var prompt = new Prompt(discordMessage.Content, discordMessage);
 
             //this contans "default" for generations, "reply" for upscales
             //but we currently get that information via the text "Upscaled by" or other text
@@ -153,8 +151,7 @@ namespace SocialAi
             {
                 return null;
             }
-            prompt.CreatedAtUtc = discordMessage.Timestamp.UtcDateTime;
-            prompt.CreatedChannelName = discordMessage.Channel.Name;
+            
 
             return prompt;
         }
@@ -166,7 +163,7 @@ namespace SocialAi
         {
             if (discordMessage.Attachments.Count > 0)
             {
-                var prompt = new Prompt(discordMessage.Content, discordMessage.CleanContent);
+                var prompt = new Prompt(discordMessage.Content, discordMessage);
                 if (prompt.Content == "") { return; }
 
                 //as if there are ever more than 1? observationally there is only 1, ever anyway.

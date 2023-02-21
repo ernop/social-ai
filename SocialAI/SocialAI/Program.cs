@@ -31,6 +31,7 @@ namespace SocialAi
             //modify this to control.
             var am = ActionMethod.SavePrompts;
             am = ActionMethod.BackfillAndMonitor;
+            Console.WriteLine($"Operating in mode: {am}");
 
             var settingsPath = "d:\\proj\\social-ai\\social-ai\\settings.json";
             var txt = File.ReadAllText(settingsPath);
@@ -168,7 +169,7 @@ namespace SocialAi
 
         private Task Log(Discord.LogMessage msg)
         {
-            Console.WriteLine(msg.ToString());
+            //Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
         }
 
