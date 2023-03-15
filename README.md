@@ -2,6 +2,7 @@
 
 
 ## TLDR; it adds captions to your midjourney images like this:
+### Updated for V5
 
 ![Image](Brouhahaha_a_grid_of_small_diverse_distinct_creatures_in_the_st_d63b9e91-f180-48f8-8f60-ee777870229c.png)
 
