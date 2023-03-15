@@ -181,6 +181,7 @@ namespace SocialAi
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Exception: {ex.Message}");
+                        await parsedMessage.SaveAndAnnotateImage();
                     }
                 }
             }

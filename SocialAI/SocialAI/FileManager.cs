@@ -195,14 +195,23 @@ namespace SocialAi
             return fp;
         }
 
-        public string? GetPathToSave(string filename)
+        /// <summary>
+        /// mosaic = it's a mosaic image, so we don't want to save it to the same folder as the originals.
+        /// </summary>
+        public string? GetPathToSave(string filename, bool mosaic = false)
         {
             if (string.IsNullOrEmpty(filename))
             {
                 throw new ArgumentNullException("missing filename");
             }
 
-            var joined = $"{Settings.ImageOutputFullPath}/{filename}";
+            var mosText = "";
+            if (mosaic)
+            {
+                mosText = "mosaic/";
+            }
+
+            var joined = $"{Settings.ImageOutputFullPath}/{mosText}{filename}";
             if (File.Exists(joined))
             {
                 Console.WriteLine($"Skipping existing: {joined}");

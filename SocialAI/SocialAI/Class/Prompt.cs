@@ -53,7 +53,10 @@ namespace SocialAi
         public AR AR { get; set; }
 
         public GenerationTypeEnum GenerationType { get; set; }
-        
+
+        //new in V5
+        public int WhichImageWasClicked { get; set; }
+
         //when the message was created
         public DateTime CreatedAtUtc { get; set; }
 
@@ -65,6 +68,11 @@ namespace SocialAi
             return m.Replace("  ", " ").Trim();
         }
 
+        private static string SimpleHackCleanPrompt(string p)
+        {
+            return p.Replace(" * ", ",");
+        }
+
         /// <summary>
         /// Rip up the prompt pulling out the various bits of information.
         /// 
@@ -72,8 +80,8 @@ namespace SocialAi
         /// </summary>
         public Prompt(string content, IMessage discordMessage)
         {
-            Content = content;
-            var cleanContent = discordMessage.CleanContent;
+            Content = SimpleHackCleanPrompt(content);
+            var cleanContent = SimpleHackCleanPrompt(discordMessage.CleanContent);
             CreatedAtUtc = discordMessage.Timestamp.UtcDateTime;
             CreatedChannelName = discordMessage.Channel.Name;
             //content examples
@@ -96,7 +104,7 @@ namespace SocialAi
             }
             var remainingFullMessage = Condense(content).Substring(2).Trim();
 
-            
+
             //we derive the type of action from the random text mj appends to the end.
             var upscaleChecker = new Regex(@"Upscaled by @(\S+#\d{4,4})").Match(cleanContent);
             if (upscaleChecker.Success)
@@ -143,7 +151,7 @@ namespace SocialAi
                 DiscordUser = new DiscordUser(upscaleAnimeChecker.Groups[1].Value);
             }
 
-            var upscaleMaxChecker= new Regex(@"Upscaled \(Max\) by @(\S+#\d{4,4})").Match(cleanContent);
+            var upscaleMaxChecker = new Regex(@"Upscaled \(Max\) by @(\S+#\d{4,4})").Match(cleanContent);
             if (upscaleMaxChecker.Success)
             {
                 GenerationType = GenerationTypeEnum.UpscaleMax;
@@ -161,6 +169,20 @@ namespace SocialAi
                 DiscordUser = new DiscordUser(normalGenerationChecker.Groups[1].Value);
             }
 
+            //this if v5 clicking a normal image.
+            //--this is ThreadExceptionEventArgs v4
+            var clickImageChecker = new Regex(@" - Image #(\d{1,1}) @(\S+#\d{4,4})").Match(cleanContent);
+            if (clickImageChecker.Success)
+            {
+                GenerationType = GenerationTypeEnum.ClickOnNormalImage;
+                cleanContent = cleanContent.Replace("Image #" + clickImageChecker.Groups[1].Value, "");
+                cleanContent = Condense(cleanContent);
+                cleanContent = cleanContent.Replace(" @" + clickImageChecker.Groups[2].Value, "");
+                cleanContent = Condense(cleanContent);
+                WhichImageWasClicked = int.Parse(clickImageChecker.Groups[1].Value);
+                DiscordUser = new DiscordUser(clickImageChecker.Groups[2].Value);
+            }
+
             var variationsChecker = new Regex(@" Variations by @(\S+#\d{4,4})").Match(cleanContent);
             if (variationsChecker.Success)
             {
@@ -172,7 +194,7 @@ namespace SocialAi
 
             if (DiscordUser == null)
             {
-               var a = 4;
+                var a = 4;
             }
 
             var parts = remainingFullMessage.Split("**");
@@ -251,7 +273,7 @@ namespace SocialAi
             //NOTE that 'cleanContent''s version of these links is apparently broken, missing a trailing '>'
             while (true)
             {
-                var imageChecker= new Regex(@"<(https://s.mj.run/[^\s]+)>").Match(remainingFullMessage);
+                var imageChecker = new Regex(@"<(https://s.mj.run/[^\s]+)>").Match(remainingFullMessage);
                 if (imageChecker.Success)
                 {
                     remainingFullMessage = remainingFullMessage.Replace(imageChecker.Groups[0].Value, "");

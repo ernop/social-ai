@@ -6,7 +6,7 @@
     /// </summary>
     public enum GenerationTypeEnum
     {
-        NormalGeneration = 1,
+        NormalGeneration = 1, //this generates the mosaic
         Upscale = 2,
         UpscaleLight = 3,
         UpscaleBeta = 4,
@@ -14,5 +14,6 @@
         UpscaleAnime = 6,
         UpscaleMax = 7,
         Variations = 8,
+        ClickOnNormalImage = 9, //this is when you click one of the 4 to "upscale"? it.
     }
 }

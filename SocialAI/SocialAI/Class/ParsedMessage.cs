@@ -1,5 +1,10 @@
 ﻿using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
+
 namespace SocialAi
 {
     /// <summary>
@@ -32,8 +37,32 @@ namespace SocialAi
             //here I should artificially set the created & updated date of the file to the timestamp, so sorting works properly
             //generally this will be better for users.
 
+            //read the filesize to hopefully move it later.
+            var im = Image.FromFile(path);
+            var width = im.Size.Width;
+            im.Dispose();
+
+
             var fp = await FileManager.Annotate(path, Prompt);
             AddExif(fp, Prompt);
+
+            //If the image is a mosaic of 4, move it to the "collage" folder.
+            //no way to tell this other than looking at the file size currently.
+
+            //note: this probably doesn't work right.
+            try
+            {
+                if (im.Size.Width == 2048)
+                {
+                    im.Dispose();
+                    var newFp = FileManager.GetPathToSave(Filename, mosaic: true);
+                    System.IO.File.Move(fp, newFp);
+                }
+            }catch (Exception ex)
+            {
+                var a = 45;
+            }
+
             return true;
         }
 
