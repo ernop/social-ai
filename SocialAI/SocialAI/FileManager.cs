@@ -38,39 +38,43 @@ namespace SocialAi
         {
             //for some reason we need a  "real" graphics object to calculate text widths based off of.
 
-            var remainingText = text + " ";
-
+            var remainingText = text;
+            var parts = remainingText.Split('\n');
             var lines = new List<string>();
-            while (remainingText != "")
+            foreach (var part in parts)
             {
-                if (remainingText == " ")
+                var remainingTestThisLine = part.Trim()+" ";
+                while (!string.IsNullOrEmpty(remainingTestThisLine ))
                 {
-                    break;
-                }
-                var testLength = remainingText.Length - 1;
-                while (true)
-                {
-                    if (testLength == 0)
+                    if (remainingTestThisLine == " ")
                     {
                         break;
                     }
-                    var nth = remainingText[testLength];
-                    if (nth != ' ')
+                    var testLength = remainingTestThisLine.Length - 1;
+                    while (true)
                     {
+                        if (testLength == 0)
+                        {
+                            break;
+                        }
+                        var nth = remainingTestThisLine[testLength];
+                        if (nth != ' ' && nth != '\t')
+                        {
+                            testLength--;
+                            continue;
+                        }
+                        var candidateText = remainingTestThisLine.Substring(0, testLength);
+
+                        var w = FakeGraphics.MeasureString(candidateText, Font);
+                        if (w.Width < pixelWidth)
+                        {
+                            remainingTestThisLine = remainingTestThisLine.Substring(testLength).Trim()+" ";
+                            lines.Add(candidateText.Trim());
+                            break;
+                        }
                         testLength--;
-                        continue;
-                    }
-                    var candidateText = remainingText.Substring(0, testLength);
 
-                    var w = FakeGraphics.MeasureString(candidateText, Font);
-                    if (w.Width < pixelWidth)
-                    {
-                        remainingText = remainingText.Substring(testLength);
-                        lines.Add(candidateText.Trim());
-                        break;
                     }
-                    testLength--;
-
                 }
             }
 

@@ -26,19 +26,22 @@ namespace SocialAi
         public string GetAnnotation()
         {
             var res = $"{Message}";
-            if (false) //we exclude these now for cleanliness.
+            if (true && (Chaos.HasValue || Version.HasValue || Seed.HasValue))
             {
+                res += "\n";
+                if (Version.HasValue)
+                {
+                    res += $"V{Version}";
+                }
+
                 if (Chaos.HasValue)
                 {
-                    res += $" C:{Chaos}";
+                    res += $" chaos:{Chaos}";
                 }
-                if (Niji.HasValue)
-                {
-                    res += $" <Niji>";
-                }
+                
                 if (Seed.HasValue)
                 {
-                    res += $" Seed:<{Seed}>";
+                    res += $" seed:{Seed}";
                 }
             }
             return res;
@@ -210,12 +213,29 @@ namespace SocialAi
             }
 
             //cleaning up human part of message
-            var versionChecker = new Regex(@"--v (\d)").Match(remainingFullMessage);
-            if (versionChecker.Success)
+
+            //for this type of checker, you do it multiple times, only counting the first version.
+            //this cleans later parts of the prompt (the way mj works is, you can use discord to suffix prompts.
+            //but if you override them by manually typing, then the first only will take effect
+            //but if you don't remove the later one (which is still part of the prompt, technically, it will be confusing.
+            var first = true;
+            while (true)
             {
-                remainingFullMessage = remainingFullMessage.Replace(versionChecker.Groups[0].Value, "");
-                remainingFullMessage = Condense(remainingFullMessage);
-                Version = int.Parse(versionChecker.Groups[1].Value);
+                var versionChecker = new Regex(@"--v (\d)").Match(remainingFullMessage);
+                if (versionChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(versionChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+                    if (first)
+                    {
+                        Version = int.Parse(versionChecker.Groups[1].Value);
+                        first = false;
+                    }
+                }
+                else
+                {
+                    break;
+                }
             }
 
             //cleaning up human part of message
@@ -227,29 +247,40 @@ namespace SocialAi
                 Niji = true;
             }
 
-            var chaosChecker = new Regex(@"--c (\d+)").Match(remainingFullMessage);
-            if (chaosChecker.Success)
+            first = true;
+            while (true)
             {
-                remainingFullMessage = remainingFullMessage.Replace(chaosChecker.Groups[0].Value, "");
-                remainingFullMessage = Condense(remainingFullMessage);
-                Chaos = int.Parse(chaosChecker.Groups[1].Value);
-
-                var chaosChecker2 = new Regex(@"--c (\d+)").Match(remainingFullMessage);
-                if (chaosChecker2.Success)
+                var chaosChecker = new Regex(@"--c (\d+)").Match(remainingFullMessage);
+                if (chaosChecker.Success)
                 {
-                    remainingFullMessage = remainingFullMessage.Replace(chaosChecker2.Groups[0].Value, "");
+                    remainingFullMessage = remainingFullMessage.Replace(chaosChecker.Groups[0].Value, "");
                     remainingFullMessage = Condense(remainingFullMessage);
+                    if (first)
+                    {
+                        Chaos = int.Parse(chaosChecker.Groups[1].Value);
+                        first = false;
+                    }
                 }
+                else { break; }
             }
 
-            var arChecker = new Regex(@"--ar (\d):(\d)").Match(remainingFullMessage);
-            if (arChecker.Success)
+            first = true;
+            while (true)
             {
-                remainingFullMessage = remainingFullMessage.Replace(arChecker.Groups[0].Value, "");
-                remainingFullMessage = Condense(remainingFullMessage);
-                var w = int.Parse(arChecker.Groups[1].Value);
-                var h = int.Parse(arChecker.Groups[2].Value);
-                AR = new AR(w, h);
+                var arChecker = new Regex(@"--ar (\d):(\d)").Match(remainingFullMessage);
+                if (arChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(arChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+                    if (first)
+                    {
+                        var w = int.Parse(arChecker.Groups[1].Value);
+                        var h = int.Parse(arChecker.Groups[2].Value);
+                        AR = new AR(w, h);
+                        first = false;
+                    }
+                }
+                else { break; }
             }
 
 
