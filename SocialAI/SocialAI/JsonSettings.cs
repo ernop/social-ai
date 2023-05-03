@@ -5,8 +5,9 @@
         //the base of the project, for git
         public string ProjBase { get; set; } = "";
         public string TokenPath { get; set; } = "";
-        public string ImageOutputFullPath { get; set; } = "";
+        public string AnnotatedImageOutputFullPath { get; set; } = "";
         public string CleanedImageOutputFullPath { get; set; } = "";
+        public string OrigImageOutputFullPath { get; set; } = "";
 
         //how far back to go downloading old pages
         public int PageLimit { get; set; } = 20;

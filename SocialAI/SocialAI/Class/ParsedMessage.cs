@@ -4,6 +4,10 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.ComponentModel;
+using System.ComponentModel.Design;
+using System.IO;
+using System.Net;
 
 namespace SocialAi
 {
@@ -27,40 +31,41 @@ namespace SocialAi
 
         public async Task<bool> SaveAndAnnotateImage()
         {
-            var path = FileManager.GetPathToSave(Filename);
-            if (path==null)
+            if (string.IsNullOrEmpty(Filename))
             {
-                return false;
+                throw new ArgumentNullException("missing filename");
             }
-            await DownloadImageAsync(path, ImageUrl, Prompt.CreatedAtUtc);
 
-            //here I should artificially set the created & updated date of the file to the timestamp, so sorting works properly
-            //generally this will be better for users.
-
-            //read the filesize to hopefully move it later.
-            var im = Image.FromFile(path);
-            var width = im.Size.Width;
-            im.Dispose();
-
-
-            var fp = await FileManager.Annotate(path, Prompt);
-            AddExif(fp, Prompt);
-
-            //If the image is a mosaic of 4, move it to the "collage" folder.
-            //no way to tell this other than looking at the file size currently.
-
-            //note: this probably doesn't work right.
-            try
+            var newFilename = string.Join("_", Filename.Split('_').Skip(1));
+            
+            var srcPath = "";
+            var joined = $"{FileManager.Settings.OrigImageOutputFullPath}/{newFilename}";
+            var joinedCleaned = $"{FileManager.Settings.CleanedImageOutputFullPath}/{newFilename}";
+            if (File.Exists(joined))
             {
-                if (im.Size.Width == 2048)
+                srcPath = joined;
+            }
+            else
+            {
+                if (File.Exists(joinedCleaned))
+                    srcPath = joinedCleaned;
+                else
                 {
-                    im.Dispose();
-                    var newFp = FileManager.GetPathToSave(Filename, mosaic: true);
-                    System.IO.File.Move(fp, newFp);
+                    var res = await DownloadImageAsync(joined, ImageUrl, Prompt.CreatedAtUtc);
+                    srcPath = joined;
+                    if (!res)
+                    {
+                        return false;
+                    }
                 }
-            }catch (Exception ex)
+            }
+
+            var annotatedPath = $"{FileManager.Settings.AnnotatedImageOutputFullPath}/{newFilename}";
+
+            if (!File.Exists(annotatedPath))
             {
-                var a = 45;
+                var fp = await FileManager.Annotate(srcPath, annotatedPath, Prompt);
+                AddExif(fp, Prompt);
             }
 
             return true;
@@ -79,14 +84,31 @@ namespace SocialAi
             }
         }
 
-        private async Task DownloadImageAsync(string path, string url, DateTime createdAtUtc)
+        private async Task<bool> DownloadImageAsync(string path, string url, DateTime createdAtUtc)
         {
+            Thread.Sleep(500);
             var uri = new Uri(url);
-            using var httpClient = new HttpClient();
-
-            var imageBytes = await httpClient.GetByteArrayAsync(uri);
-            await File.WriteAllBytesAsync(path, imageBytes);
-            File.SetLastWriteTime(path, createdAtUtc);
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            using var httpClient = new HttpClient { Timeout=TimeSpan.FromSeconds(200)};
+            try
+            {
+                var imageBytes = await httpClient.GetByteArrayAsync(uri);
+                await File.WriteAllBytesAsync(path, imageBytes);
+                File.SetLastWriteTimeUtc(path, createdAtUtc);
+                File.SetCreationTimeUtc(path, createdAtUtc);
+                Console.WriteLine($"Wrote: {path}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (System.IO.File.Exists(path))
+                {
+                    Console.WriteLine($"File existed but couldn't be finalized: {path} so deleting.");
+                    System.IO.File.Delete(path);
+                }
+                Console.WriteLine($"Exception while downloading, will be picked up again later. {path} {ex}");
+                return false;
+            }
         }
     }
 }

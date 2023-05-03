@@ -33,7 +33,7 @@ namespace SocialAi
             am = ActionMethod.BackfillAndMonitor;
             Console.WriteLine($"Operating in mode: {am}");
 
-            var settingsPath = "d:\\proj\\social-ai\\social-ai\\settings.json";
+            var settingsPath = "c:\\proj\\social-ai\\settings.json";
             var txt = File.ReadAllText(settingsPath);
             JsonSettings = JsonConvert.DeserializeObject<JsonSettings>(txt);
             if (JsonSettings == null)
@@ -126,7 +126,7 @@ namespace SocialAi
         private void SavePrompts(Task<List<Prompt>> prompts, string username, string rawChannelName)
         {
             var safeChannelName = Path.GetFileName(rawChannelName);
-            var targetPromptFilename = $"{JsonSettings.ImageOutputFullPath}/{username.Split('#')[0]}_{safeChannelName}_prompts.txt";
+            var targetPromptFilename = $"{JsonSettings.AnnotatedImageOutputFullPath}/{username.Split('#')[0]}_{safeChannelName}_prompts.txt";
             using (StreamWriter writer = new StreamWriter(targetPromptFilename))
             {
                 writer.WriteLine("Message\tGenerationType\tVersion\tChaos\tAR\tseed\tstylize\tniji\tCreatedAtUtc\tCreatedChannelName\trefsCSV");
@@ -169,7 +169,7 @@ namespace SocialAi
 
         private Task Log(Discord.LogMessage msg)
         {
-            //Console.WriteLine(msg.ToString());
+            Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
         }
 
@@ -193,7 +193,7 @@ namespace SocialAi
         //for party use - clean out older items in the share folder (so if you're running a slideshow, it'll hit new ones preferentially)
         private static void CleanTen()
         {
-            var path = JsonSettings.ImageOutputFullPath;
+            var path = JsonSettings.AnnotatedImageOutputFullPath;
             var cleanPath = JsonSettings.CleanedImageOutputFullPath;
             var oldFileInfos = System.IO.Directory.GetFiles(path).Select(el => new FileInfo(System.IO.Path.Combine(path, el))).OrderBy(el => el.CreationTime).Take(10);
             foreach (var el in oldFileInfos)

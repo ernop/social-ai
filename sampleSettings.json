@@ -1,0 +1,23 @@
+﻿{
+  "ProjBase": "c:\\proj\\social-ai\\",
+  "TokenPath": "c:\\proj\\social-ai\\token.txt",
+  "AnnotatedImageOutputFullPath": "c:\\proj\\social-ai\\images",
+  "CleanedImageOutputFullPath": "c:\\proj\\social-ai\\imagesClean",
+  "OrigImageOutputFullPath": "c:\\proj\\social-ai\\imagesOrig",
+  "DMChannels": 
+  [
+	{"ChannelId":, "Name":"not-working"},
+  ],
+  "PageLimit":3,
+  
+  "UsernameForPromptDownloading":"Homer#7878",
+  "Channels": [
+	{"ChannelId":,"Name":""},
+	{"ChannelId":,"Name":""}
+  ],
+  "HiddenChannels":[
+{"ChannelId":,"Name":""},
+  ]
+}
+
+

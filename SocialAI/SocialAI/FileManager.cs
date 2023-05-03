@@ -112,11 +112,11 @@ namespace SocialAi
             return newImage;
         }
 
-        public async Task<string> Annotate(string fp, Prompt prompt)
+        public async Task<string> Annotate(string source, string dest, Prompt prompt)
         {
             var text = prompt.GetAnnotation();
 
-            var outputImageToAnnotate = Image.FromFile(fp);
+            var outputImageToAnnotate = Image.FromFile(source);
             var holdImages = new List<Image>();
             Size outputSize;
             //output is the original size, plus some Y increase to fit the text.
@@ -194,44 +194,9 @@ namespace SocialAi
                 graphics.DrawString(line, Font, brush, new PointF(0, pos));
             }
             graphics.Save();
-            im.Save(fp);
-            Console.WriteLine($"Successfully saved new fp: {fp}");
-            return fp;
-        }
-
-        /// <summary>
-        /// mosaic = it's a mosaic image, so we don't want to save it to the same folder as the originals.
-        /// </summary>
-        public string? GetPathToSave(string filename, bool mosaic = false)
-        {
-            if (string.IsNullOrEmpty(filename))
-            {
-                throw new ArgumentNullException("missing filename");
-            }
-
-            var mosText = "";
-            if (mosaic)
-            {
-                mosText = "mosaic/";
-            }
-
-            var joined = $"{Settings.ImageOutputFullPath}/{mosText}{filename}";
-            if (File.Exists(joined))
-            {
-                Console.WriteLine($"Skipping existing: {joined}");
-                return null;
-            }
-
-            //also exclude downloading if it exists in the backup folder
-            var joinedCLeaned = $"{Settings.CleanedImageOutputFullPath}/{filename}";
-            if (File.Exists(joinedCLeaned))
-            {
-                Console.WriteLine($"Skipping existing cleaned: {joinedCLeaned}");
-                return null;
-            }
-
-            Console.WriteLine($"Will download: {joined}");
-            return joined;
+            im.Save(dest);
+            Console.WriteLine($"Successfully saved new fp: {dest}");
+            return dest;
         }
     }
 }

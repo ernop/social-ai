@@ -4,4 +4,6 @@
 **/token.txt
 **/settings.json
 /images
+/imagesClean
+/imagesOrig
 /scripts/out.html

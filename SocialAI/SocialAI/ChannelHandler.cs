@@ -97,16 +97,20 @@ namespace SocialAi
                 }
 
                 Console.WriteLine($"Channel:{channelConfig.Name} - page:{page} - {messages.CountAsync()}");
-
-                await foreach (var awaitedMessage in messages)
+                try
                 {
-                    foreach (var message in awaitedMessage)
+                    await foreach (var awaitedMessageCollection in messages)
                     {
-                        //Console.WriteLine($"\tmm{channelConfig}-{message.Content}");
-                        fromMessage = message;
-                        DownloadImagesFromMessageAsync(message);
-                        await Task.Delay(1);
+                        foreach (var message in awaitedMessageCollection)
+                        {
+                            fromMessage = message;
+                            DownloadImagesFromMessageAsync(message);
+                            await Task.Delay(1);
+                        }
                     }
+                }catch (Exception ex)
+                {
+                    Console.WriteLine($"Error splitting up messages. {ex}");
                 }
                 page++;
                 await Task.Delay(1);
@@ -165,7 +169,7 @@ namespace SocialAi
             {
                 var prompt = new Prompt(discordMessage.Content, discordMessage);
                 if (prompt.Content == "") { return; }
-
+                Console.WriteLine($"handling:{prompt.CleanContent}");
                 //as if there are ever more than 1? observationally there is only 1, ever anyway.
                 foreach (var att in discordMessage.Attachments)
                 {
@@ -173,15 +177,26 @@ namespace SocialAi
                     {
                         continue;
                     }
+
+                    //I'm thinking now - why do I accept the filename from att.filename? it's such a mess
+                    //the good thing about it is that it's guaranteed unique (assumption?) based on the suffixed hash.
+                    //the bad thing is it's a huge mess and unreadable and cuts off most of the important image construction information
+                    //which is mostly at the end of the prompt.
                     var parsedMessage = new ParsedMessage(FileManager, prompt, att.ProxyUrl, att.Filename);
                     try
                     {
-                        await parsedMessage.SaveAndAnnotateImage();
+                        while (true)
+                        {
+                            var res = await parsedMessage.SaveAndAnnotateImage();
+                            if (res) { break; }
+                            Thread.Sleep(1100);
+                            Console.WriteLine($"waiting to try downloading image again. {att.Filename}");
+                        }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Exception: {ex.Message}");
-                        await parsedMessage.SaveAndAnnotateImage();
+                        //await parsedMessage.SaveAndAnnotateImage();
                     }
                 }
             }
