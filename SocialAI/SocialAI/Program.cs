@@ -34,6 +34,12 @@ namespace SocialAi
             Console.WriteLine($"Operating in mode: {am}");
 
             var settingsPath = "c:\\proj\\social-ai\\settings.json";
+            if (!File.Exists(settingsPath))
+            {
+                Console.WriteLine($"Base settings file doesn't exist ({settingsPath}). You probably want to copy SampleSettings.json to this path (or fix the C# code above to point at where your file is) and also fill in the values in the file with the channel ids, folders etc for things to work.");
+                Environment.Exit(3);
+            }
+
             var txt = File.ReadAllText(settingsPath);
             JsonSettings = JsonConvert.DeserializeObject<JsonSettings>(txt);
             if (JsonSettings == null)
@@ -41,6 +47,8 @@ namespace SocialAi
                 throw new Exception($"No settings at {settingsPath}");
             }
             FileManager.Init(JsonSettings);
+
+            CheckFolderExistence(settingsPath);
 
             client = new DiscordSocketClient();
             client.Log += Log;
@@ -88,7 +96,7 @@ namespace SocialAi
 
                         ChannelHandler.BackfillImagesFromTextChannelAsync((Discord.Rest.RestTextChannel)channel, channelConfig);
                         Console.WriteLine($"BackfillImagesFromTextChannelAsync: {channelConfig.Name}");
-                        
+
                         //now, also wait forever monitoring the channel.
                         await Task.Delay(-1);
 
@@ -122,6 +130,25 @@ namespace SocialAi
             }
         }
 
+
+        private static void CheckFolderExistence(string settingPath)
+        {
+            if (!Directory.Exists(FileManager.Settings.AnnotatedImageOutputFullPath))
+            {
+                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.AnnotatedImageOutputFullPath}. Create it. Exiting program.");
+                Environment.Exit(1);
+            }
+            if (!Directory.Exists(FileManager.Settings.CleanedImageOutputFullPath))
+            {
+                Console.WriteLine($"Your settings file {settingPath} references a folder for CleanedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.CleanedImageOutputFullPath}. Create it. Exiting program.");
+                Environment.Exit(1);
+            }
+            if (!Directory.Exists(FileManager.Settings.OrigImageOutputFullPath))
+            {
+                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.OrigImageOutputFullPath}. Create it and retry. Exiting program.");
+                Environment.Exit(1);
+            }
+        }
 
         private void SavePrompts(Task<List<Prompt>> prompts, string username, string rawChannelName)
         {

@@ -30,7 +30,8 @@ namespace SocialAi
             var gotOne = true;
             while (true)
             {
-                if (!gotOne) {
+                if (!gotOne)
+                {
                     break;
                 }
 
@@ -108,7 +109,8 @@ namespace SocialAi
                             await Task.Delay(1);
                         }
                     }
-                }catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Console.WriteLine($"Error splitting up messages. {ex}");
                 }
@@ -155,7 +157,7 @@ namespace SocialAi
             {
                 return null;
             }
-            
+
 
             return prompt;
         }
