@@ -26,7 +26,7 @@ namespace SocialAi
         {
             Settings = settings;
 
-            var fakePath = settings.ProjBase + "/image.png";
+            var fakePath = settings.ProjBase + "image.png";
             if (!System.IO.File.Exists(fakePath))
             {
                 throw new Exception("something is wrong with your project settings file; you need to define projbase so projbase/image.png hits something");

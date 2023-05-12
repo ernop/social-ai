@@ -33,7 +33,7 @@ namespace SocialAi
             am = ActionMethod.BackfillAndMonitor;
             Console.WriteLine($"Operating in mode: {am}");
 
-            var settingsPath = "c:\\proj\\social-ai\\settings.json";
+            var settingsPath = "c:\\proj\\SocialAI\\social-ai\\settings.json";
             if (!File.Exists(settingsPath))
             {
                 Console.WriteLine($"Base settings file doesn't exist ({settingsPath}). You probably want to copy SampleSettings.json to this path (or fix the C# code above to point at where your file is) and also fill in the values in the file with the channel ids, folders etc for things to work.");

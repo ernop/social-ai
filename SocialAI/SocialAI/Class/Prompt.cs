@@ -38,7 +38,11 @@ namespace SocialAi
                 {
                     res += $" chaos:{Chaos}";
                 }
-                
+                if (Stylize.HasValue)
+                {
+                    res += $" stylize:{Stylize}";
+                }
+
                 if (Seed.HasValue)
                 {
                     res += $" seed:{Seed}";
@@ -47,7 +51,7 @@ namespace SocialAi
             return res;
         }
 
-        public int? Version { get; set; }
+        public double? Version { get; set; }
         public int? Chaos { get; set; }
         public bool? Niji { get; set; }
         public long? Seed { get; set; }
@@ -221,14 +225,14 @@ namespace SocialAi
             var first = true;
             while (true)
             {
-                var versionChecker = new Regex(@"--v (\d)").Match(remainingFullMessage);
+                var versionChecker = new Regex(@"--v (\d{1,1}[\d\.]{0,3})").Match(remainingFullMessage);
                 if (versionChecker.Success)
                 {
                     remainingFullMessage = remainingFullMessage.Replace(versionChecker.Groups[0].Value, "");
                     remainingFullMessage = Condense(remainingFullMessage);
                     if (first)
                     {
-                        Version = int.Parse(versionChecker.Groups[1].Value);
+                        Version = double.Parse(versionChecker.Groups[1].Value);
                         first = false;
                     }
                 }
@@ -291,13 +295,22 @@ namespace SocialAi
                 remainingFullMessage = Condense(remainingFullMessage);
                 Seed = int.Parse(seedChecker.Groups[1].Value);
             }
-
-            var stylizeChecker = new Regex(@"--s (\d+)").Match(remainingFullMessage);
-            if (stylizeChecker.Success)
+            first = true;
+            while (true)
             {
-                remainingFullMessage = remainingFullMessage.Replace(stylizeChecker.Groups[0].Value, "");
-                remainingFullMessage = Condense(remainingFullMessage);
-                Stylize = int.Parse(stylizeChecker.Groups[1].Value);
+                var stylizeChecker = new Regex(@"--s (\d+)").Match(remainingFullMessage);
+                if (stylizeChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(stylizeChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+
+                    if (first)
+                    {
+                        Stylize = int.Parse(stylizeChecker.Groups[1].Value);
+                        first = false;
+                    }
+                }
+                else { break; }
             }
 
             //remove and save image links for inclusion in the output image.
