@@ -33,7 +33,7 @@ namespace SocialAi
             am = ActionMethod.BackfillAndMonitor;
             Console.WriteLine($"Operating in mode: {am}");
 
-            var settingsPath = "c:\\proj\\SocialAI\\social-ai\\settings.json";
+            var settingsPath = "d:\\proj\\social-ai\\social-ai\\settings.json";
             if (!File.Exists(settingsPath))
             {
                 Console.WriteLine($"Base settings file doesn't exist ({settingsPath}). You probably want to copy SampleSettings.json to this path (or fix the C# code above to point at where your file is) and also fill in the values in the file with the channel ids, folders etc for things to work.");
@@ -135,17 +135,18 @@ namespace SocialAi
         {
             if (!Directory.Exists(FileManager.Settings.AnnotatedImageOutputFullPath))
             {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.AnnotatedImageOutputFullPath}. Create it. Exiting program.");
+                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: \"{ FileManager.Settings.AnnotatedImageOutputFullPath}\". Create it. Exiting program.");
+
                 Environment.Exit(1);
             }
             if (!Directory.Exists(FileManager.Settings.CleanedImageOutputFullPath))
             {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for CleanedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.CleanedImageOutputFullPath}. Create it. Exiting program.");
+                Console.WriteLine($"Your settings file {settingPath} references a folder for CleanedImageOutputFullPath which doesn't actually exist: \"{FileManager.Settings.CleanedImageOutputFullPath}\". Create it. Exiting program.");
                 Environment.Exit(1);
             }
             if (!Directory.Exists(FileManager.Settings.OrigImageOutputFullPath))
             {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: {FileManager.Settings.OrigImageOutputFullPath}. Create it and retry. Exiting program.");
+                Console.WriteLine($"Your settings file {settingPath} references a folder for OrigImageOutputFullPath which doesn't actually exist: \"{FileManager.Settings.OrigImageOutputFullPath}\". Create it and retry. Exiting program.");
                 Environment.Exit(1);
             }
         }
@@ -190,7 +191,7 @@ namespace SocialAi
                     var joined = string.Join("\t", parts);
                     writer.WriteLine(joined);
                 }
-
+                 
             }
         }
 
@@ -211,6 +212,11 @@ namespace SocialAi
             }
 
             //other chat comments.
+            else if (regot.Content.Length == 0) 
+            {
+                var a = 4;
+            }
+
             else if (regot.Content[0] == '*')
             {
                 ChannelHandler.DownloadImagesFromMessageAsync(regot);

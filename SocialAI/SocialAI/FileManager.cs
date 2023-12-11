@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using SixLabors.ImageSharp.ColorSpaces;
+
 namespace SocialAi
 {
     public class FileManager
@@ -17,6 +19,8 @@ namespace SocialAi
         //extra y to add to images in annotation section as a kind of vertical buffer.
         public static int TextExtraY { get; set; } = LineSize / 2 + 5;
         public Font Font { get; set; } = new Font("Gotham", FontSize, FontStyle.Regular);
+        public Font MyFont { get; set; } = new Font("Gotham", 18, FontStyle.Bold);
+        
         public JsonSettings Settings { get; set; }
 
         // A fake object required to calculate text widths.
@@ -190,9 +194,21 @@ namespace SocialAi
             foreach (var line in lines)
             {
                 var pos = (float)Math.Floor((double)(maxYSeen + TextExtraY / 2 + ii * LineSize));
-                ii += 1;
                 graphics.DrawString(line, Font, brush, new PointF(0, pos));
+
+                ii += 1;
             }
+
+            //add my watermarking etc here.  Slightly annoying since to be perfect I should maybe calculate the remaining Y space left for my small annotation?  But that's annoying. Rather just add 10pix or so to the bottom by default and fill mine in there.
+            var SAIconpos = (float)Math.Floor((double)(maxYSeen + TextExtraY / 2 + (ii-1) * LineSize)+16);
+            
+            var myFixedText = "midjourney image saved via SocialAI";
+            var w = FakeGraphics.MeasureString(myFixedText, MyFont);
+            var p = new PointF(im.Width-w.Width-4, SAIconpos);
+            var verDarkGrey=Color.FromArgb(255, 36, 36, 36);
+            var mybrush = new SolidBrush(verDarkGrey);
+            graphics.DrawString(myFixedText, MyFont, mybrush, p);
+
             graphics.Save();
             im.Save(dest);
             Console.WriteLine($"Successfully saved new fp: {dest}");

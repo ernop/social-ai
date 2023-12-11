@@ -26,7 +26,7 @@ namespace SocialAi
         public string GetAnnotation()
         {
             var res = $"{Message}";
-            if (true && (Chaos.HasValue || Version.HasValue || Seed.HasValue))
+            if (true && (Chaos.HasValue || Version.HasValue || Seed.HasValue || !string.IsNullOrWhiteSpace(Style)))
             {
                 res += "\n";
                 if (Version.HasValue)
@@ -47,6 +47,11 @@ namespace SocialAi
                 {
                     res += $" seed:{Seed}";
                 }
+
+                if (!string.IsNullOrWhiteSpace(Style))
+                {
+                    res += $" style:{Style}";
+                }
             }
             return res;
         }
@@ -56,6 +61,10 @@ namespace SocialAi
         public bool? Niji { get; set; }
         public long? Seed { get; set; }
         public long? Stylize { get; set; }
+        
+        //e.g. cute, etc.
+        public string? Style { get; set; }
+
         //null=default
         public AR AR { get; set; }
 
@@ -296,6 +305,7 @@ namespace SocialAi
                 Seed = int.Parse(seedChecker.Groups[1].Value);
             }
             first = true;
+            
             while (true)
             {
                 var stylizeChecker = new Regex(@"--s (\d+)").Match(remainingFullMessage);
@@ -307,6 +317,23 @@ namespace SocialAi
                     if (first)
                     {
                         Stylize = int.Parse(stylizeChecker.Groups[1].Value);
+                        first = false;
+                    }
+                }
+                else { break; }
+            }
+
+            while (true)
+            {
+                var styleChecker= new Regex(@"--style (.+)").Match(remainingFullMessage);
+                if (styleChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(styleChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+
+                    if (first)
+                    {
+                        Style= styleChecker.Groups[1].Value;
                         first = false;
                     }
                 }
