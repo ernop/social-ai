@@ -22,6 +22,41 @@ namespace SocialAi
         //the human part of the text
         public string Message { get; set; }
 
+        
+
+        public double? Version { get; set; }
+        public int? Chaos { get; set; }
+        public bool? Niji { get; set; }
+        public long? Seed { get; set; }
+        public long? Stylize { get; set; }
+        
+        //e.g. cute, etc.
+        public string? Style { get; set; }
+
+        //null=default
+        public AspectRatio AR { get; set; }
+
+        public GenerationTypeEnum GenerationType { get; set; }
+
+        //new in V5
+        public int WhichImageWasClicked { get; set; }
+
+        //when the message was created
+        public DateTime CreatedAtUtc { get; set; }
+
+        //which channel it was sent on.
+        public string CreatedChannelName { get; set; }
+
+        public string Condense(string m)
+        {
+            return m.Replace("  ", " ").Trim();
+        }
+
+        private static string SimpleHackCleanPrompt(string p)
+        {
+            return p.Replace(" * ", ",");
+        }
+
         //annotater should call this to get text based on parsed version.
         public string GetAnnotation()
         {
@@ -54,39 +89,6 @@ namespace SocialAi
                 }
             }
             return res;
-        }
-
-        public double? Version { get; set; }
-        public int? Chaos { get; set; }
-        public bool? Niji { get; set; }
-        public long? Seed { get; set; }
-        public long? Stylize { get; set; }
-        
-        //e.g. cute, etc.
-        public string? Style { get; set; }
-
-        //null=default
-        public AR AR { get; set; }
-
-        public GenerationTypeEnum GenerationType { get; set; }
-
-        //new in V5
-        public int WhichImageWasClicked { get; set; }
-
-        //when the message was created
-        public DateTime CreatedAtUtc { get; set; }
-
-        //which channel it was sent on.
-        public string CreatedChannelName { get; set; }
-
-        public string Condense(string m)
-        {
-            return m.Replace("  ", " ").Trim();
-        }
-
-        private static string SimpleHackCleanPrompt(string p)
-        {
-            return p.Replace(" * ", ",");
         }
 
         /// <summary>
@@ -179,18 +181,18 @@ namespace SocialAi
             var normalGenerationChecker = new Regex(@" - @(\S+#\d{4,4})").Match(cleanContent);
             if (normalGenerationChecker.Success)
             {
-                GenerationType = GenerationTypeEnum.NormalGeneration;
+                GenerationType = GenerationTypeEnum.NormalImageCommandOutputMosaic;
                 cleanContent = cleanContent.Replace(normalGenerationChecker.Groups[0].Value, "");
                 cleanContent = Condense(cleanContent);
                 DiscordUser = new DiscordUser(normalGenerationChecker.Groups[1].Value);
             }
 
-            //this if v5 clicking a normal image.
+            //this if v5 clicking a normal image.  i.e. this is a single image, not a mosaic (or other type of output)
             //--this is ThreadExceptionEventArgs v4
             var clickImageChecker = new Regex(@" - Image #(\d{1,1}) @(\S+#\d{4,4})").Match(cleanContent);
             if (clickImageChecker.Success)
             {
-                GenerationType = GenerationTypeEnum.ClickOnNormalImage;
+                GenerationType = GenerationTypeEnum.UpscaleSingle;
                 cleanContent = cleanContent.Replace("Image #" + clickImageChecker.Groups[1].Value, "");
                 cleanContent = Condense(cleanContent);
                 cleanContent = cleanContent.Replace(" @" + clickImageChecker.Groups[2].Value, "");
@@ -206,11 +208,6 @@ namespace SocialAi
                 cleanContent = cleanContent.Replace(variationsChecker.Groups[0].Value, "");
                 cleanContent = Condense(cleanContent);
                 DiscordUser = new DiscordUser(variationsChecker.Groups[1].Value);
-            }
-
-            if (DiscordUser == null)
-            {
-                var a = 4;
             }
 
             var parts = remainingFullMessage.Split("**");
@@ -289,7 +286,7 @@ namespace SocialAi
                     {
                         var w = int.Parse(arChecker.Groups[1].Value);
                         var h = int.Parse(arChecker.Groups[2].Value);
-                        AR = new AR(w, h);
+                        AR = new AspectRatio(w, h);
                         first = false;
                     }
                 }
@@ -359,18 +356,6 @@ namespace SocialAi
             remainingFullMessage = Condense(remainingFullMessage);
 
             Message = remainingFullMessage;
-        }
-    }
-
-    //An aspect ratio holder    
-    public class AR
-    {
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public AR(int width, int height)
-        {
-            Width = width;
-            Height = height;
         }
     }
 }

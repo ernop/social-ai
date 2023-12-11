@@ -130,24 +130,40 @@ namespace SocialAi
             }
         }
 
-
+        /// <summary>
+        /// there are 3 main folder outputs.  1) raw from mj.  2) cleaned (this is basically a folder for images which were downloaded already, which I moved out of the main folder cause it gets super slow.  Why is this necessary? because I want the "full downloader" to not redownload them in that case. So it also checks this holding, backup folder, to save you bandwidth and stuff. 3) annotated (with subtext of the prompt added by this program, which is its main function)
+        ///     within each one there are two subfolders: m for everything but single images, and s for single images.
+        /// </summary>
+        /// <param name="settingPath"></param>
         private static void CheckFolderExistence(string settingPath)
         {
-            if (!Directory.Exists(FileManager.Settings.AnnotatedImageOutputFullPath))
-            {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for AnnotatedImageOutputFullPath which doesn't actually exist: \"{ FileManager.Settings.AnnotatedImageOutputFullPath}\". Create it. Exiting program.");
+            var annotated = new Tuple<string, string>(FileManager.Settings.AnnotatedImageOutputFullPath, nameof(FileManager.Settings.AnnotatedImageOutputFullPath));
+            var cleaned = new Tuple<string, string>(FileManager.Settings.CleanedImageOutputFullPath, nameof(FileManager.Settings.CleanedImageOutputFullPath));
+            var raw = new Tuple<string, string>(FileManager.Settings.RawMJOutputImagePath, nameof(FileManager.Settings.RawMJOutputImagePath));
 
-                Environment.Exit(1);
-            }
-            if (!Directory.Exists(FileManager.Settings.CleanedImageOutputFullPath))
+            var cover = new List<Tuple<string, string>>() { annotated, cleaned, raw, };
+
+            foreach (var th in cover)
             {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for CleanedImageOutputFullPath which doesn't actually exist: \"{FileManager.Settings.CleanedImageOutputFullPath}\". Create it. Exiting program.");
-                Environment.Exit(1);
-            }
-            if (!Directory.Exists(FileManager.Settings.OrigImageOutputFullPath))
-            {
-                Console.WriteLine($"Your settings file {settingPath} references a folder for OrigImageOutputFullPath which doesn't actually exist: \"{FileManager.Settings.OrigImageOutputFullPath}\". Create it and retry. Exiting program.");
-                Environment.Exit(1);
+                if (!Directory.Exists(th.Item1)){
+                    Console.WriteLine($"Your settings file {settingPath} references a folder for {th.Item2} which doesn't actually exist: \"{th.Item1}\". Create it. Exiting program.");
+
+                    Environment.Exit(1);
+                }
+                var mdir = System.IO.Path.Combine(th.Item1, "m");
+                if (!Directory.Exists(mdir))
+                {
+                    Console.WriteLine($"Your settings file {settingPath} references a folder for {th.Item2}/mdir for non-single images, which doesn't actually exist: \"{mdir}\". Create it. Exiting program.");
+
+                    Environment.Exit(1);
+                }
+                var sdir = System.IO.Path.Combine(th.Item1, "s");
+                if (!Directory.Exists(sdir))
+                {
+                    Console.WriteLine($"Your settings file {settingPath} references a folder for {th.Item2}/sdir for non-single images, which doesn't actually exist: \"{sdir}\". Create it. Exiting program.");
+
+                    Environment.Exit(1);
+                }
             }
         }
 
@@ -191,7 +207,7 @@ namespace SocialAi
                     var joined = string.Join("\t", parts);
                     writer.WriteLine(joined);
                 }
-                 
+
             }
         }
 
@@ -212,7 +228,7 @@ namespace SocialAi
             }
 
             //other chat comments.
-            else if (regot.Content.Length == 0) 
+            else if (regot.Content.Length == 0)
             {
                 var a = 4;
             }

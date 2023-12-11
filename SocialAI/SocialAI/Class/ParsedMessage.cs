@@ -37,10 +37,24 @@ namespace SocialAi
             }
 
             var newFilename = string.Join("_", Filename.Split('_').Skip(1));
-            
             var srcPath = "";
-            var joined = $"{FileManager.Settings.OrigImageOutputFullPath}/{newFilename}";
-            var joinedCleaned = $"{FileManager.Settings.CleanedImageOutputFullPath}/{newFilename}";
+
+
+            //2023.12 weird that I never fixed the naming system so that ones which are single images stand out in some way.
+            //I suppose I should also just make up a prefix system fora ll types, like upscale etc for sorting? Hmm well I can do that whenever.
+            if (Prompt.GenerationType == GenerationTypeEnum.UpscaleSingle)
+            {
+                newFilename = $"S_{newFilename}";
+            }
+            var subFolder = "";
+            if (Prompt.GenerationType == GenerationTypeEnum.UpscaleSingle)
+            { subFolder = "s"; }
+            else
+            {
+                subFolder = "m";
+            }
+            var joined = $"{FileManager.Settings.RawMJOutputImagePath}/{subFolder}/{newFilename}";
+            var joinedCleaned = $"{FileManager.Settings.CleanedImageOutputFullPath}/{subFolder}/{newFilename}";
             if (File.Exists(joined))
             {
                 srcPath = joined;
@@ -89,7 +103,7 @@ namespace SocialAi
             Thread.Sleep(500);
             var uri = new Uri(url);
             System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-            using var httpClient = new HttpClient { Timeout=TimeSpan.FromSeconds(200)};
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(200) };
             try
             {
                 var imageBytes = await httpClient.GetByteArrayAsync(uri);
