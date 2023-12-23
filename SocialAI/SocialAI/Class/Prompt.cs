@@ -47,7 +47,7 @@ namespace SocialAi
             return res;
         }
 
-        public int? Version { get; set; }
+        public double? Version { get; set; }
         public int? Chaos { get; set; }
         public bool? Niji { get; set; }
         public long? Seed { get; set; }
@@ -221,14 +221,14 @@ namespace SocialAi
             var first = true;
             while (true)
             {
-                var versionChecker = new Regex(@"--v (\d)").Match(remainingFullMessage);
+                var versionChecker = new Regex(@"--v (\d){1,2}(\.\d){0,2}").Match(remainingFullMessage);
                 if (versionChecker.Success)
                 {
                     remainingFullMessage = remainingFullMessage.Replace(versionChecker.Groups[0].Value, "");
                     remainingFullMessage = Condense(remainingFullMessage);
                     if (first)
                     {
-                        Version = int.Parse(versionChecker.Groups[1].Value);
+                        Version = double.Parse(versionChecker.Groups[1].Value);
                         first = false;
                     }
                 }
