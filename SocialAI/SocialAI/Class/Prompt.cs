@@ -22,38 +22,19 @@ namespace SocialAi
         //the human part of the text
         public string Message { get; set; }
 
-        //annotater should call this to get text based on parsed version.
-        public string GetAnnotation()
-        {
-            var res = $"{Message}";
-            if (true && (Chaos.HasValue || Version.HasValue || Seed.HasValue))
-            {
-                res += "\n";
-                if (Version.HasValue)
-                {
-                    res += $"V{Version}";
-                }
-
-                if (Chaos.HasValue)
-                {
-                    res += $" chaos:{Chaos}";
-                }
-                
-                if (Seed.HasValue)
-                {
-                    res += $" seed:{Seed}";
-                }
-            }
-            return res;
-        }
+        
 
         public double? Version { get; set; }
         public int? Chaos { get; set; }
         public bool? Niji { get; set; }
         public long? Seed { get; set; }
         public long? Stylize { get; set; }
+        
+        //e.g. cute, etc.
+        public string? Style { get; set; }
+
         //null=default
-        public AR AR { get; set; }
+        public AspectRatio AR { get; set; }
 
         public GenerationTypeEnum GenerationType { get; set; }
 
@@ -74,6 +55,40 @@ namespace SocialAi
         private static string SimpleHackCleanPrompt(string p)
         {
             return p.Replace(" * ", ",");
+        }
+
+        //annotater should call this to get text based on parsed version.
+        public string GetAnnotation()
+        {
+            var res = $"{Message}";
+            if (true && (Chaos.HasValue || Version.HasValue || Seed.HasValue || !string.IsNullOrWhiteSpace(Style)))
+            {
+                res += "\n";
+                if (Version.HasValue)
+                {
+                    res += $"V{Version}";
+                }
+
+                if (Chaos.HasValue)
+                {
+                    res += $" chaos:{Chaos}";
+                }
+                if (Stylize.HasValue)
+                {
+                    res += $" stylize:{Stylize}";
+                }
+
+                if (Seed.HasValue)
+                {
+                    res += $" seed:{Seed}";
+                }
+
+                if (!string.IsNullOrWhiteSpace(Style))
+                {
+                    res += $" style:{Style}";
+                }
+            }
+            return res;
         }
 
         /// <summary>
@@ -166,18 +181,18 @@ namespace SocialAi
             var normalGenerationChecker = new Regex(@" - @(\S+#\d{4,4})").Match(cleanContent);
             if (normalGenerationChecker.Success)
             {
-                GenerationType = GenerationTypeEnum.NormalGeneration;
+                GenerationType = GenerationTypeEnum.NormalImageCommandOutputMosaic;
                 cleanContent = cleanContent.Replace(normalGenerationChecker.Groups[0].Value, "");
                 cleanContent = Condense(cleanContent);
                 DiscordUser = new DiscordUser(normalGenerationChecker.Groups[1].Value);
             }
 
-            //this if v5 clicking a normal image.
+            //this if v5 clicking a normal image.  i.e. this is a single image, not a mosaic (or other type of output)
             //--this is ThreadExceptionEventArgs v4
             var clickImageChecker = new Regex(@" - Image #(\d{1,1}) @(\S+#\d{4,4})").Match(cleanContent);
             if (clickImageChecker.Success)
             {
-                GenerationType = GenerationTypeEnum.ClickOnNormalImage;
+                GenerationType = GenerationTypeEnum.UpscaleSingle;
                 cleanContent = cleanContent.Replace("Image #" + clickImageChecker.Groups[1].Value, "");
                 cleanContent = Condense(cleanContent);
                 cleanContent = cleanContent.Replace(" @" + clickImageChecker.Groups[2].Value, "");
@@ -193,11 +208,6 @@ namespace SocialAi
                 cleanContent = cleanContent.Replace(variationsChecker.Groups[0].Value, "");
                 cleanContent = Condense(cleanContent);
                 DiscordUser = new DiscordUser(variationsChecker.Groups[1].Value);
-            }
-
-            if (DiscordUser == null)
-            {
-                var a = 4;
             }
 
             var parts = remainingFullMessage.Split("**");
@@ -221,7 +231,9 @@ namespace SocialAi
             var first = true;
             while (true)
             {
-                var versionChecker = new Regex(@"--v (\d){1,2}(\.\d){0,2}").Match(remainingFullMessage);
+                //var versionChecker = new Regex(@"--v (\d){1,2}(\.\d){0,2}").Match(remainingFullMessage);
+                var versionChecker = new Regex(@"--v (\d{1,1}[\d\.]{0,3})").Match(remainingFullMessage);
+
                 if (versionChecker.Success)
                 {
                     remainingFullMessage = remainingFullMessage.Replace(versionChecker.Groups[0].Value, "");
@@ -276,7 +288,7 @@ namespace SocialAi
                     {
                         var w = int.Parse(arChecker.Groups[1].Value);
                         var h = int.Parse(arChecker.Groups[2].Value);
-                        AR = new AR(w, h);
+                        AR = new AspectRatio(w, h);
                         first = false;
                     }
                 }
@@ -291,13 +303,40 @@ namespace SocialAi
                 remainingFullMessage = Condense(remainingFullMessage);
                 Seed = int.Parse(seedChecker.Groups[1].Value);
             }
-
-            var stylizeChecker = new Regex(@"--s (\d+)").Match(remainingFullMessage);
-            if (stylizeChecker.Success)
+            first = true;
+            
+            while (true)
             {
-                remainingFullMessage = remainingFullMessage.Replace(stylizeChecker.Groups[0].Value, "");
-                remainingFullMessage = Condense(remainingFullMessage);
-                Stylize = int.Parse(stylizeChecker.Groups[1].Value);
+                var stylizeChecker = new Regex(@"--s (\d+)").Match(remainingFullMessage);
+                if (stylizeChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(stylizeChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+
+                    if (first)
+                    {
+                        Stylize = int.Parse(stylizeChecker.Groups[1].Value);
+                        first = false;
+                    }
+                }
+                else { break; }
+            }
+
+            while (true)
+            {
+                var styleChecker= new Regex(@"--style (.+)").Match(remainingFullMessage);
+                if (styleChecker.Success)
+                {
+                    remainingFullMessage = remainingFullMessage.Replace(styleChecker.Groups[0].Value, "");
+                    remainingFullMessage = Condense(remainingFullMessage);
+
+                    if (first)
+                    {
+                        Style= styleChecker.Groups[1].Value;
+                        first = false;
+                    }
+                }
+                else { break; }
             }
 
             //remove and save image links for inclusion in the output image.
@@ -319,18 +358,6 @@ namespace SocialAi
             remainingFullMessage = Condense(remainingFullMessage);
 
             Message = remainingFullMessage;
-        }
-    }
-
-    //An aspect ratio holder    
-    public class AR
-    {
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public AR(int width, int height)
-        {
-            Width = width;
-            Height = height;
         }
     }
 }

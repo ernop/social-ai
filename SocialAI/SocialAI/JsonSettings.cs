@@ -5,9 +5,21 @@
         //the base of the project, for git
         public string ProjBase { get; set; } = "";
         public string TokenPath { get; set; } = "";
+        
+        /// <summary>
+        /// This is clearly my main output, the image plus my socialAI Annotation
+        /// </summary>
         public string AnnotatedImageOutputFullPath { get; set; } = "";
+        
+        /// <summary>
+        /// Some kind of legacy holding folder for files you don't watn to redownload. not sure the right way to handle this from now.
+        /// </summary>
         public string CleanedImageOutputFullPath { get; set; } = "";
-        public string OrigImageOutputFullPath { get; set; } = "";
+
+        /// <summary>
+        /// Raw Image directly sent from mj.
+        /// </summary>
+        public string RawMJOutputImagePath { get; set; } = "";
 
         //how far back to go downloading old pages
         public int PageLimit { get; set; } = 20;

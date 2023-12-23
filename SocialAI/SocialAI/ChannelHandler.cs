@@ -183,7 +183,7 @@ namespace SocialAi
                     //I'm thinking now - why do I accept the filename from att.filename? it's such a mess
                     //the good thing about it is that it's guaranteed unique (assumption?) based on the suffixed hash.
                     //the bad thing is it's a huge mess and unreadable and cuts off most of the important image construction information
-                    //which is mostly at the end of the prompt.
+                    //which is mostly at the end of the prompt.  But this is the classic "fitting a multidimensional object into a string" problem.
                     var parsedMessage = new ParsedMessage(FileManager, prompt, att.ProxyUrl, att.Filename);
                     try
                     {
